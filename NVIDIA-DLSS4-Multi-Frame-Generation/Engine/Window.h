@@ -15,16 +15,23 @@ namespace Engine
         EngineWindow(const EngineWindow&) = delete;
         EngineWindow& operator=(const EngineWindow&) = delete;
 
-        bool shouldClose() const { return glfwWindowShouldClose(window); }
+        bool shouldClose() const { return glfwWindowShouldClose(m_window); }
+        VkExtent2D getExtent() { return { static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height) }; }
+        bool hasWindowResized() const { return m_framebufferResized; }
+        void resetWindowResizedFlag() { m_framebufferResized = false; }
+
+        void createWindowSurface(VkInstance _instance, VkSurfaceKHR* _surface);
 
     private:
+        static void frameBufferResizeCallback(GLFWwindow* _window, int _width, int _height);
         void initWindow();
 
-        const int width;
-        const int height;
+        int m_width;
+        int m_height;
+        bool m_framebufferResized = false; // Flag to check if the window has been resized
 
-        std::string windowName;
+        std::string m_windowName;
 
-        GLFWwindow* window;
+        GLFWwindow* m_window;
     };
 }

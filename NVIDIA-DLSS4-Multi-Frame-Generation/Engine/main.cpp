@@ -1,19 +1,20 @@
-#include "Core.h"
+// Engine Core
+#include "Core.h" 
 
-//std
+// std
 #include <iostream>
 #include <cstdlib>
-#include <stdexcept>
 
-using namespace Engine; // Namespace for the custom engine for readable code
-int main() {
-  
+// Namespace from the custom engine for readability
+using namespace Engine; 
+int main() 
+{
     // Initialize the engine core
-    std::shared_ptr<Core> engineCore = Core::initialize();
+    Core engineCore(std::make_shared<EngineWindow>(Core::WIDTH, Core::HEIGHT, "Vulkan Engine"));
 
     try 
     {
-        engineCore->run();
+        engineCore.run();
     } 
     catch (const std::exception& e)
     {

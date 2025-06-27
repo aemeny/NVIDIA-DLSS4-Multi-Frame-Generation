@@ -38,6 +38,15 @@
     <ClCompile Include="Engine\Pipeline.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\EngineDevice.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\SwapChain.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ModelHandler.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Window.h">
@@ -47,6 +56,15 @@
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Pipeline.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\EngineDevice.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\SwapChain.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ModelHandler.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
   </ItemGroup>
