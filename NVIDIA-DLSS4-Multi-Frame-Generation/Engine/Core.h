@@ -1,7 +1,7 @@
 #pragma once
 #include "Pipeline.h"
 #include "SwapChain.h"
-#include "ModelHandler.h"
+#include "GameObject.h"
 
 #include <memory>
 
@@ -24,23 +24,25 @@ namespace Engine
     private:
         bool m_terminateApplication;
         void drawFrame();
+        void renderGameObjects(VkCommandBuffer _commandBuffer);
 
         // Member objs
         std::shared_ptr<EngineWindow> m_window;
         EngineDevice m_device{ m_window };
 
-        void loadModels();
-        std::unique_ptr<Model> m_model;
+        void loadGameObjects();
+        std::vector<GameObject> m_gameObjects;
 
         //Swap Chain
         void recreateSwapChain();
         void recordCommandBuffers(int _imageIndex);
         std::unique_ptr<SwapChain> m_swapChain;
 
-        // Pipline
+        // Pipeline
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
+        void freeCommandBuffers();
         std::unique_ptr<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
         std::vector<VkCommandBuffer> m_commandBuffers;

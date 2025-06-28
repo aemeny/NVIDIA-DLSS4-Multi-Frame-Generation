@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClCompile Include="Engine\Core.cpp" />
     <ClCompile Include="Engine\EngineDevice.cpp" />
+    <ClCompile Include="Engine\GameObject.cpp" />
     <ClCompile Include="Engine\main.cpp" />
     <ClCompile Include="Engine\ModelHandler.cpp" />
     <ClCompile Include="Engine\Pipeline.cpp" />
@@ -146,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="Engine\Core.h" />
     <ClInclude Include="Engine\EngineDevice.h" />
+    <ClInclude Include="Engine\GameObject.h" />
     <ClInclude Include="Engine\ModelHandler.h" />
     <ClInclude Include="Engine\Pipeline.h" />
     <ClInclude Include="Engine\SwapChain.h" />

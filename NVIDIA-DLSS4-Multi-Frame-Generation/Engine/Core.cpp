@@ -1,16 +1,28 @@
 #include "Core.h"
 
+#include <glm/gtc/constants.hpp>
+
 #include <stdexcept>
 #include <array>
+#include <iostream>
 
 namespace Engine
 {
+    struct SimplePushConstantData
+    {
+        glm::mat2 m_transform{1.0f};
+        glm::vec2 m_offset;
+        alignas(16) glm::vec3 m_colour;
+    };
+
+
     Core::Core(std::shared_ptr<EngineWindow> _window)
         : m_window(_window) 
     {
-        loadModels();
+        loadGameObjects();
         createPipelineLayout();
         recreateSwapChain();
+        std::cout << "Max Push Constant Size: " << m_device.properties.limits.maxPushConstantsSize << std::endl;
         createCommandBuffers();
     }
 
@@ -64,32 +76,49 @@ namespace Engine
             throw std::runtime_error("Failed to submit command buffers!");
     }
 
-    void Core::loadModels()
+    void Core::loadGameObjects()
     {
         std::vector<Model::Vertex> vertices = {
             {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
             {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
         };
+        std::shared_ptr<Model> m_model = std::make_shared<Model>(m_device, vertices);
 
-        m_model = std::make_unique<Model>(m_device, vertices);
+        GameObject triangle = GameObject::createGameObject();
+        triangle.m_model = m_model;
+        triangle.m_colour = { 0.1f, 0.8f, 0.1f };
+        triangle.m_transform2D.m_translation.x = 0.2f;
+        triangle.m_transform2D.m_scale = { 2.0f, 0.5f };
+        triangle.m_transform2D.m_rotation = 0.25f * glm::two_pi<float>();
+
+        m_gameObjects.push_back(std::move(triangle));
     }
 
     void Core::createPipelineLayout()
     {
+        VkPushConstantRange pushConstantRange = {};
+        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.offset = 0;
+        pushConstantRange.size = sizeof(SimplePushConstantData);
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0;
         pipelineLayoutInfo.pSetLayouts = nullptr;
-        pipelineLayoutInfo.pushConstantRangeCount = 0;
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 1;
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
         if (vkCreatePipelineLayout(m_device.device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
             throw std::runtime_error("Failed to create pipeline layout!");
     }
 
     void Core::createPipeline()
     {
-        auto pipelineConfig = Pipeline::defaultPipelineConfigInfo(m_swapChain->width(), m_swapChain->height());
+        assert(m_swapChain != nullptr && "Cannot create graphics pipeline: No swap chain provided");
+        assert(m_pipelineLayout != nullptr && "Cannot create graphics pipeline: No pipelineLayout provided");
+
+        PipelineConfigInfo pipelineConfig = {};
+        Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.m_renderPass = m_swapChain->getRenderPass();
         pipelineConfig.m_pipelineLayout = m_pipelineLayout;
         m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/Unlit/Vertex.vert.spv", "Shaders/Unlit/Fragment.frag.spv", pipelineConfig);
@@ -109,6 +138,13 @@ namespace Engine
             throw std::runtime_error("Failed to allocate command buffers!");
     }
 
+    void Core::freeCommandBuffers()
+    {
+        vkFreeCommandBuffers(m_device.device(), m_device.getCommandPool(), static_cast<uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
+        m_commandBuffers.clear();
+        m_commandBuffers.resize(0);
+    }
+
     void Core::recordCommandBuffers(int _imageIndex)
     {
         VkCommandBufferBeginInfo beginInfo = {};
@@ -126,7 +162,7 @@ namespace Engine
         renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
 
         std::array<VkClearValue, 2> clearValues = {};
-        clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f }; // Clear color
+        clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f }; // Clear color
         clearValues[1].depthStencil = { 1.0f, 0 }; // Clear depth
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -134,13 +170,43 @@ namespace Engine
 
         vkCmdBeginRenderPass(m_commandBuffers[_imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        m_pipeline->bind(m_commandBuffers[_imageIndex]);
-        m_model->bind(m_commandBuffers[_imageIndex]);
-        m_model->draw(m_commandBuffers[_imageIndex]);
+        // Set viewport and scissor dynamically
+        VkViewport viewport = {};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(m_swapChain->getSwapChainExtent().width);
+        viewport.height = static_cast<float>(m_swapChain->getSwapChainExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        VkRect2D scissor = { {0, 0}, m_swapChain->getSwapChainExtent()};
+        vkCmdSetViewport(m_commandBuffers[_imageIndex], 0, 1, &viewport);
+        vkCmdSetScissor(m_commandBuffers[_imageIndex], 0, 1, &scissor);
+
+        renderGameObjects(m_commandBuffers[_imageIndex]);
 
         vkCmdEndRenderPass(m_commandBuffers[_imageIndex]);
         if (vkEndCommandBuffer(m_commandBuffers[_imageIndex]) != VK_SUCCESS)
             throw std::runtime_error("Failed to record command buffer!");
+    }
+
+    void Core::renderGameObjects(VkCommandBuffer _commandBuffer)
+    {
+        m_pipeline->bind(_commandBuffer);
+
+        for (GameObject& obj : m_gameObjects)
+        {
+            obj.m_transform2D.m_rotation = glm::mod(obj.m_transform2D.m_rotation + 0.001f, glm::two_pi<float>());
+
+            SimplePushConstantData push = {};
+            push.m_offset = obj.m_transform2D.m_translation;
+            push.m_colour = obj.m_colour;
+            push.m_transform = obj.m_transform2D.mat2();
+
+            vkCmdPushConstants(_commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
+            
+            obj.m_model->bind(_commandBuffer);
+            obj.m_model->draw(_commandBuffer);
+        }
     }
 
     void Core::recreateSwapChain()
@@ -154,8 +220,22 @@ namespace Engine
         }
 
         vkDeviceWaitIdle(m_device.device()); // Wait for the device to finish all operations before recreating the swap chain
-        m_swapChain = nullptr;
-        m_swapChain = std::make_unique<SwapChain>(m_device, extend);
+        
+        if (m_swapChain == nullptr)
+        {
+            m_swapChain = std::make_unique<SwapChain>(m_device, extend);
+        }
+        else
+        {
+            m_swapChain = std::make_unique<SwapChain>(m_device, extend, std::move(m_swapChain));
+            if (m_swapChain->imageCount() != m_commandBuffers.size())
+            {
+                freeCommandBuffers();
+                createCommandBuffers();
+            }
+        }
+
+        // possible future improvement: If render pass is compatable do nothing else
         createPipeline();
     }
 }

@@ -10,6 +10,7 @@ namespace Engine
         static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
         SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent);
+        SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent, std::shared_ptr<SwapChain> _previous);
         ~SwapChain();
 
         SwapChain(const SwapChain&) = delete;
@@ -31,6 +32,7 @@ namespace Engine
         VkResult submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex);
 
     private:
+        void init();
         void createSwapChain();
         void createImageViews();
         void createDepthResources();
@@ -59,6 +61,7 @@ namespace Engine
         VkExtent2D m_windowExtent;
 
         VkSwapchainKHR m_swapChain;
+        std::shared_ptr<SwapChain> m_oldSwapChain;
 
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
