@@ -135,10 +135,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Buffer.cpp" />
     <ClCompile Include="Engine\Camera.cpp" />
     <ClCompile Include="Engine\Core.cpp" />
     <ClCompile Include="Engine\EngineDevice.cpp" />
+    <ClCompile Include="Engine\FrameInfo.cpp" />
     <ClCompile Include="Engine\GameObject.cpp" />
+    <ClCompile Include="Engine\InputHandler.cpp" />
     <ClCompile Include="Engine\main.cpp" />
     <ClCompile Include="Engine\ModelHandler.cpp" />
     <ClCompile Include="Engine\Pipeline.cpp" />
@@ -148,15 +151,19 @@
     <ClCompile Include="Engine\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Buffer.h" />
     <ClInclude Include="Engine\Camera.h" />
     <ClInclude Include="Engine\Core.h" />
     <ClInclude Include="Engine\EngineDevice.h" />
+    <ClInclude Include="Engine\FrameInfo.h" />
     <ClInclude Include="Engine\GameObject.h" />
+    <ClInclude Include="Engine\InputHandler.h" />
     <ClInclude Include="Engine\ModelHandler.h" />
     <ClInclude Include="Engine\Pipeline.h" />
     <ClInclude Include="Engine\Renderer.h" />
     <ClInclude Include="Engine\RenderSystem.h" />
     <ClInclude Include="Engine\SwapChain.h" />
+    <ClInclude Include="Engine\Utils.h" />
     <ClInclude Include="Engine\Window.h" />
   </ItemGroup>
   <ItemGroup>

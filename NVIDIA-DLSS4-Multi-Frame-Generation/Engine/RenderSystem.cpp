@@ -9,7 +9,7 @@ namespace Engine
     struct SimplePushConstantData
     {
         glm::mat4 m_transform{ 1.0f };
-        alignas(16) glm::vec3 m_colour;
+        glm::mat4 m_normalMatrix{ 1.0f };
     };
 
 
@@ -53,23 +53,23 @@ namespace Engine
         m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/Unlit/Vertex.vert.spv", "Shaders/Unlit/Fragment.frag.spv", pipelineConfig);
     }
 
-    void RenderSystem::renderGameObjects(VkCommandBuffer _commandBuffer, std::vector<GameObject>& _gameObjects, const Camera& _camera)
+    void RenderSystem::renderGameObjects(FrameInfo& _frameInfo, std::vector<GameObject>& _gameObjects)
     {
-        m_pipeline->bind(_commandBuffer);
+        m_pipeline->bind(_frameInfo.m_commandBuffer);
+
+        glm::mat4 projectView = _frameInfo.m_camera.getProjectionMatrix() * _frameInfo.m_camera.getViewMatrix();
 
         for (GameObject& obj : _gameObjects)
         {
-            obj.m_transform.m_rotation.x = glm::mod(obj.m_transform.m_rotation.x + 0.0001f, glm::two_pi<float>());
-            obj.m_transform.m_rotation.y = glm::mod(obj.m_transform.m_rotation.y + 0.0002f, glm::two_pi<float>());
-
             SimplePushConstantData push = {};
-            push.m_colour = obj.m_colour;
-            push.m_transform = _camera.getProjectionMatrix() * obj.m_transform.mat4();
+            glm::mat4 modelMatrix = obj.m_transform.mat4();
+            push.m_normalMatrix = obj.m_transform.normalMatrix();
+            push.m_transform = projectView * modelMatrix;
 
-            vkCmdPushConstants(_commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
+            vkCmdPushConstants(_frameInfo.m_commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
 
-            obj.m_model->bind(_commandBuffer);
-            obj.m_model->draw(_commandBuffer);
+            obj.m_model->bind(_frameInfo.m_commandBuffer);
+            obj.m_model->draw(_frameInfo.m_commandBuffer);
         }
     }
 }

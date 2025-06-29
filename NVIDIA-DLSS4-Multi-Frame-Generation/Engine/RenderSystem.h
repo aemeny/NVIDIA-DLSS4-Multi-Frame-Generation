@@ -1,7 +1,7 @@
 #pragma once
 #include "Pipeline.h"
 #include "GameObject.h"
-#include "Camera.h"
+#include "FrameInfo.h"
 
 namespace Engine
 {
@@ -12,7 +12,7 @@ namespace Engine
         RenderSystem(const RenderSystem&) = delete;
         RenderSystem& operator=(const RenderSystem&) = delete;
 
-        void renderGameObjects(VkCommandBuffer _commandBuffer, std::vector<GameObject>& _gameObjects, const Camera& _camera);
+        void renderGameObjects(FrameInfo& _frameInfo, std::vector<GameObject>& _gameObjects);
 
     private:
         void createPipeline(VkRenderPass _renderPass);

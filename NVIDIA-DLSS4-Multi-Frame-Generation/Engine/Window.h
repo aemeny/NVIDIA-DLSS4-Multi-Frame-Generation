@@ -20,6 +20,8 @@ namespace Engine
         bool hasWindowResized() const { return m_framebufferResized; }
         void resetWindowResizedFlag() { m_framebufferResized = false; }
 
+        GLFWwindow* getGLFWWindow() const { return m_window; }
+
         void createWindowSurface(VkInstance _instance, VkSurfaceKHR* _surface);
 
     private:
