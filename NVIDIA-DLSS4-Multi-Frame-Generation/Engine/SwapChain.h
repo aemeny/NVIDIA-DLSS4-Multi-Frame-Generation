@@ -2,6 +2,7 @@
 #include "EngineDevice.h"
 
 #include <vulkan/vulkan.h>
+#include <memory>
 
 namespace Engine
 {
@@ -31,6 +32,11 @@ namespace Engine
         VkResult acquireNextImage(uint32_t* _imageIndex);
         VkResult submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex);
 
+        bool compareSwapFormats(const SwapChain& _swapChain) const {
+            return _swapChain.m_swapChainDepthFormat == m_swapChainDepthFormat && 
+                   _swapChain.m_swapChainImageFormat == m_swapChainImageFormat;
+        }
+
     private:
         void init();
         void createSwapChain();
@@ -46,6 +52,7 @@ namespace Engine
         VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& _capabilities);
 
         VkFormat m_swapChainImageFormat;
+        VkFormat m_swapChainDepthFormat;
         VkExtent2D m_swapChainExtent;
 
         std::vector<VkFramebuffer> m_swapChainFramebuffers;

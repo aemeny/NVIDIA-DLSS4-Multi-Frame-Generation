@@ -192,7 +192,7 @@ namespace Engine
             throw std::runtime_error("Failed to create swap chain!");
 
         /* Only specified a minimum number of images in the swap chain, so the implementation is allowed 
-           to create a swap chain with more. First query the final number of images with vkGetSwapchainImagesKHR, 
+           to create a swap chain with more. First query the final number of images with vkGetSwapChainImagesKHR, 
            then resize the container and finally call it again to retrieve the handles. */
         vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, nullptr);
         m_swapChainImages.resize(imageCount);
@@ -260,12 +260,12 @@ namespace Engine
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
         VkSubpassDependency dependency = {};
+        dependency.dstSubpass = 0;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.srcAccessMask = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        dependency.dstSubpass = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
         VkRenderPassCreateInfo renderPassInfo = {};
@@ -306,6 +306,7 @@ namespace Engine
     void SwapChain::createDepthResources() 
     {
         VkFormat depthFormat = findDepthFormat();
+        m_swapChainDepthFormat = depthFormat;
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
         m_depthImages.resize(imageCount());
