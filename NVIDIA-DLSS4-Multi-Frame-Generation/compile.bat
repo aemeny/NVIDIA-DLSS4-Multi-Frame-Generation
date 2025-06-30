@@ -1,3 +1,7 @@
-C:\VulkanSDK\1.4.313.2\Bin\glslc.exe Shaders\Unlit\Vertex.vert -o Shaders\Unlit\Vertex.vert.spv
-C:\VulkanSDK\1.4.313.2\Bin\glslc.exe Shaders\Unlit\Fragment.frag -o Shaders\Unlit\Fragment.frag.spv
+C:\VulkanSDK\1.4.313.2\Bin\glslc.exe Shaders\Basic\Vertex.vert -o Shaders\Basic\Vertex.vert.spv
+C:\VulkanSDK\1.4.313.2\Bin\glslc.exe Shaders\Basic\Fragment.frag -o Shaders\Basic\Fragment.frag.spv
+
+C:\VulkanSDK\1.4.313.2\Bin\glslc.exe Shaders\PointLight.vert -o Shaders\PointLight.vert.spv
+C:\VulkanSDK\1.4.313.2\Bin\glslc.exe Shaders\PointLight.frag -o Shaders\PointLight.frag.spv
+
 pause

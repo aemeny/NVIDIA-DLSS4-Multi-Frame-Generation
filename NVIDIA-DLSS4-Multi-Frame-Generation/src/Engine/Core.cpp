@@ -1,5 +1,6 @@
 #include "Core.h"
 #include "Buffer.h"
+#include "..\Systems\PointLightSystem.h"
 
 #include <glm/gtc/constants.hpp>
 
@@ -9,14 +10,6 @@
 
 namespace Engine
 {
-    struct GlobalUbo
-    {
-        /*64 bits; aligned*/ glm::mat4 m_projectionView{1.0f};
-        glm::vec4 m_ambientLight{ 1.0f, 1.0f, 1.0f, 0.02f }; // W is intensity
-        glm::vec3 m_lightPosition{ -1.0f };
-        alignas(16) glm::vec4 m_lightColor{ 1.0f }; // W is light intensity
-    };
-
     Core::Core(std::shared_ptr<EngineWindow> _window)
         : m_window(_window) 
     {
@@ -49,7 +42,6 @@ namespace Engine
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
             .build();
 
-        RenderSystem renderSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); i++)
         {
@@ -58,6 +50,10 @@ namespace Engine
                 .writeBuffer(0, &bufferInfo)
                 .build(globalDescriptorSets[i]);
         }
+
+        RenderSystem renderSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+
 
         Camera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.0f));
@@ -102,13 +98,22 @@ namespace Engine
 
                 // Update
                 GlobalUbo ubo{};
-                ubo.m_projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+                ubo.m_projection = camera.getProjectionMatrix();
+                ubo.m_view = camera.getViewMatrix();
+                ubo.inverseView = camera.getInverseViewMatrix();
+
+                pointLightSystem.update(frameInfo, ubo);
+
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
                 
                 // Render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
+
+                // Rendering solid objects first
                 renderSystem.renderGameObjects(frameInfo);
+                pointLightSystem.render(frameInfo);
+
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
@@ -144,5 +149,27 @@ namespace Engine
         floor.m_transform.m_translation = glm::vec3(0.0f, 0.5f, 0.0f);
         floor.m_transform.m_scale = glm::vec3(5.0f, 1.0f, 5.0f);
         m_gameObjects.emplace(floor.getId(), std::move(floor));
+
+
+        // Create point lights
+        std::vector<glm::vec3> lightColors{
+            {1.f, .1f, .1f},
+            {.1f, .1f, 1.f},
+            {.1f, 1.f, .1f},
+            {1.f, 1.f, .1f},
+            {.1f, 1.f, 1.f},
+            {1.f, 1.f, 1.f}  // Predefined light colors
+        };
+        for (int i = 0; i < lightColors.size(); i++)
+        {
+            auto pointLight = GameObject::makePointLight(0.2f);
+            pointLight.m_colour = lightColors[i];
+            auto rotateLight = glm::rotate(
+                glm::mat4(1.0f), 
+                (i * glm::two_pi<float>()) / lightColors.size(),
+                glm::vec3(0.0f, -1.0f, 0.0f));
+            pointLight.m_transform.m_translation = glm::vec3(rotateLight * glm::vec4(-1.2f, -1.2f, -1.2f, 1.0f));
+            m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        }
     }
 }

@@ -48,8 +48,8 @@ namespace Engine
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
-        auto attributeDescriptions = Model::Vertex::getAttributeDescriptions();
-        auto bindingDescription = Model::Vertex::getBindingDescriptions();
+        auto& attributeDescriptions = _configInfo.m_attributeDescriptions;
+        auto& bindingDescription = _configInfo.m_bindingDescriptions;
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -65,7 +65,7 @@ namespace Engine
         pipelineInfo.pInputAssemblyState = &_configInfo.m_inputAssemblyInfo;
         pipelineInfo.pViewportState = &_configInfo.m_viewportInfo;
         pipelineInfo.pRasterizationState = &_configInfo.m_rasterizationInfo;
-        pipelineInfo.pMultisampleState = &_configInfo.m_multisampleInfo;
+        pipelineInfo.pMultisampleState = &_configInfo.m_multiSampleInfo;
         pipelineInfo.pColorBlendState = &_configInfo.m_colorBlendInfo;
         pipelineInfo.pDepthStencilState = &_configInfo.m_depthStencilInfo;
         pipelineInfo.pDynamicState = &_configInfo.m_dynamicStateInfo;
@@ -122,14 +122,14 @@ namespace Engine
        _configInfo.m_rasterizationInfo.depthBiasSlopeFactor = 0.0f;
        
        
-       // Multisample State (Anti-aliasing)
-       _configInfo.m_multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-       _configInfo.m_multisampleInfo.sampleShadingEnable = VK_FALSE;
-       _configInfo.m_multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-       _configInfo.m_multisampleInfo.minSampleShading = 1.0f;
-       _configInfo.m_multisampleInfo.pSampleMask = nullptr;
-       _configInfo.m_multisampleInfo.alphaToCoverageEnable = VK_FALSE;
-       _configInfo.m_multisampleInfo.alphaToOneEnable = VK_FALSE;
+       // MultiSample State (Anti-aliasing)
+       _configInfo.m_multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+       _configInfo.m_multiSampleInfo.sampleShadingEnable = VK_FALSE;
+       _configInfo.m_multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+       _configInfo.m_multiSampleInfo.minSampleShading = 1.0f;
+       _configInfo.m_multiSampleInfo.pSampleMask = nullptr;
+       _configInfo.m_multiSampleInfo.alphaToCoverageEnable = VK_FALSE;
+       _configInfo.m_multiSampleInfo.alphaToOneEnable = VK_FALSE;
        
        
        // Color Blend State (Combines fragment colors)
@@ -165,11 +165,28 @@ namespace Engine
        _configInfo.m_depthStencilInfo.front = {};
        _configInfo.m_depthStencilInfo.back = {};
 
+       // Dynamic State (States that can change at runtime)
        _configInfo.m_dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
        _configInfo.m_dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
        _configInfo.m_dynamicStateInfo.pDynamicStates = _configInfo.m_dynamicStateEnables.data();
        _configInfo.m_dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(_configInfo.m_dynamicStateEnables.size());
        _configInfo.m_dynamicStateInfo.flags = 0;
+
+
+       _configInfo.m_bindingDescriptions = Model::Vertex::getBindingDescriptions();
+       _configInfo.m_attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+    }
+
+    void Pipeline::enableAlphaBlending(PipelineConfigInfo& _configInfo)
+    {
+        _configInfo.m_colorBlendAttachment.blendEnable = VK_TRUE;
+        _configInfo.m_colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        _configInfo.m_colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        _configInfo.m_colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        _configInfo.m_colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        _configInfo.m_colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        _configInfo.m_colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        _configInfo.m_colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
     }
 
     void Pipeline::bind(VkCommandBuffer _commandBuffer)

@@ -135,43 +135,47 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Engine\Buffer.cpp" />
-    <ClCompile Include="Engine\Camera.cpp" />
-    <ClCompile Include="Engine\Core.cpp" />
-    <ClCompile Include="Engine\Descriptors.cpp" />
-    <ClCompile Include="Engine\EngineDevice.cpp" />
-    <ClCompile Include="Engine\FrameInfo.cpp" />
-    <ClCompile Include="Engine\GameObject.cpp" />
-    <ClCompile Include="Engine\InputHandler.cpp" />
-    <ClCompile Include="Engine\main.cpp" />
-    <ClCompile Include="Engine\ModelHandler.cpp" />
-    <ClCompile Include="Engine\Pipeline.cpp" />
-    <ClCompile Include="Engine\Renderer.cpp" />
-    <ClCompile Include="Engine\RenderSystem.cpp" />
-    <ClCompile Include="Engine\SwapChain.cpp" />
-    <ClCompile Include="Engine\Window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Engine\Buffer.h" />
-    <ClInclude Include="Engine\Camera.h" />
-    <ClInclude Include="Engine\Core.h" />
-    <ClInclude Include="Engine\Descriptors.h" />
-    <ClInclude Include="Engine\EngineDevice.h" />
-    <ClInclude Include="Engine\FrameInfo.h" />
-    <ClInclude Include="Engine\GameObject.h" />
-    <ClInclude Include="Engine\InputHandler.h" />
-    <ClInclude Include="Engine\ModelHandler.h" />
-    <ClInclude Include="Engine\Pipeline.h" />
-    <ClInclude Include="Engine\Renderer.h" />
-    <ClInclude Include="Engine\RenderSystem.h" />
-    <ClInclude Include="Engine\SwapChain.h" />
-    <ClInclude Include="Engine\Utils.h" />
-    <ClInclude Include="Engine\Window.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="compile.bat" />
-    <None Include="Shaders\Unlit\Fragment.frag" />
-    <None Include="Shaders\Unlit\Vertex.vert" />
+    <None Include="Shaders\Basic\Fragment.frag" />
+    <None Include="Shaders\Basic\Vertex.vert" />
+    <None Include="Shaders\PointLight.frag" />
+    <None Include="Shaders\PointLight.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Engine\Buffer.h" />
+    <ClInclude Include="src\Engine\Camera.h" />
+    <ClInclude Include="src\Engine\Core.h" />
+    <ClInclude Include="src\Engine\Descriptors.h" />
+    <ClInclude Include="src\Engine\EngineDevice.h" />
+    <ClInclude Include="src\Engine\FrameInfo.h" />
+    <ClInclude Include="src\Engine\GameObject.h" />
+    <ClInclude Include="src\Engine\InputHandler.h" />
+    <ClInclude Include="src\Engine\ModelHandler.h" />
+    <ClInclude Include="src\Engine\Pipeline.h" />
+    <ClInclude Include="src\Engine\Renderer.h" />
+    <ClInclude Include="src\Engine\SwapChain.h" />
+    <ClInclude Include="src\Engine\Utils.h" />
+    <ClInclude Include="src\Engine\Window.h" />
+    <ClInclude Include="src\Systems\PointLightSystem.h" />
+    <ClInclude Include="src\Systems\RenderSystem.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Engine\Buffer.cpp" />
+    <ClCompile Include="src\Engine\Camera.cpp" />
+    <ClCompile Include="src\Engine\Core.cpp" />
+    <ClCompile Include="src\Engine\Descriptors.cpp" />
+    <ClCompile Include="src\Engine\EngineDevice.cpp" />
+    <ClCompile Include="src\Engine\FrameInfo.cpp" />
+    <ClCompile Include="src\Engine\GameObject.cpp" />
+    <ClCompile Include="src\Engine\InputHandler.cpp" />
+    <ClCompile Include="src\Engine\main.cpp" />
+    <ClCompile Include="src\Engine\ModelHandler.cpp" />
+    <ClCompile Include="src\Engine\Pipeline.cpp" />
+    <ClCompile Include="src\Engine\Renderer.cpp" />
+    <ClCompile Include="src\Engine\SwapChain.cpp" />
+    <ClCompile Include="src\Engine\Window.cpp" />
+    <ClCompile Include="src\Systems\PointLightSystem.cpp" />
+    <ClCompile Include="src\Systems\RenderSystem.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

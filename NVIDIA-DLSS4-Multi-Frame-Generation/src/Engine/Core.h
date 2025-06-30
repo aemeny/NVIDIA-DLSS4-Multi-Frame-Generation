@@ -1,6 +1,6 @@
 #pragma once
 #include "Renderer.h"
-#include "RenderSystem.h"
+#include "..\Systems\RenderSystem.h"
 #include "InputHandler.h"
 #include "Descriptors.h"
 
@@ -12,8 +12,8 @@ namespace Engine
     struct Core 
     {
         // Window dimensions
-        static constexpr int WIDTH = 800;
-        static constexpr int HEIGHT = 600;
+        static constexpr int WIDTH = 1200;
+        static constexpr int HEIGHT = 900;
 
         Core(std::shared_ptr<EngineWindow> _window);
         ~Core();

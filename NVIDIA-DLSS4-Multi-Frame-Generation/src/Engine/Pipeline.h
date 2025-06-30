@@ -12,10 +12,13 @@ namespace Engine
         PipelineConfigInfo(const PipelineConfigInfo&) = delete;
         PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
 
+        std::vector<VkVertexInputBindingDescription> m_bindingDescriptions;
+        std::vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
+
         VkPipelineViewportStateCreateInfo m_viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo m_inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo m_rasterizationInfo;
-        VkPipelineMultisampleStateCreateInfo m_multisampleInfo;
+        VkPipelineMultisampleStateCreateInfo m_multiSampleInfo;
         VkPipelineColorBlendAttachmentState m_colorBlendAttachment;
         VkPipelineColorBlendStateCreateInfo m_colorBlendInfo;
         VkPipelineDepthStencilStateCreateInfo m_depthStencilInfo;
@@ -36,6 +39,7 @@ namespace Engine
         Pipeline& operator=(const Pipeline&) = delete;
 
         static void defaultPipelineConfigInfo(PipelineConfigInfo& _configInfo);
+        static void enableAlphaBlending(PipelineConfigInfo& _configInfo);
 
         void bind(VkCommandBuffer _commandBuffer);
 

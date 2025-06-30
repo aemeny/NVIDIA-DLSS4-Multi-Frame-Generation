@@ -52,7 +52,7 @@ namespace Engine
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.m_renderPass = _renderPass;
         pipelineConfig.m_pipelineLayout = m_pipelineLayout;
-        m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/Unlit/Vertex.vert.spv", "Shaders/Unlit/Fragment.frag.spv", pipelineConfig);
+        m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/Basic/Vertex.vert.spv", "Shaders/Basic/Fragment.frag.spv", pipelineConfig);
     }
 
     void RenderSystem::renderGameObjects(FrameInfo& _frameInfo)

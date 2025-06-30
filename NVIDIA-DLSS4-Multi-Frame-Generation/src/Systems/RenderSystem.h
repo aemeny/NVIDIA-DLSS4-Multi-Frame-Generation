@@ -1,7 +1,7 @@
 #pragma once
-#include "Pipeline.h"
-#include "GameObject.h"
-#include "FrameInfo.h"
+#include "..\Engine\Pipeline.h"
+#include "..\Engine\GameObject.h"
+#include "..\Engine\FrameInfo.h"
 
 namespace Engine
 {
