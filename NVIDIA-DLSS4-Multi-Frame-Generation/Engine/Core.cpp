@@ -11,13 +11,20 @@ namespace Engine
 {
     struct GlobalUbo
     {
-        glm::mat4 m_projectionView{ 1.0f };
-        glm::vec3 m_lightDirection = glm::normalize(glm::vec3(1.0f, -3.0f, -1.0f));
+        /*64 bits; aligned*/ glm::mat4 m_projectionView{1.0f};
+        glm::vec4 m_ambientLight{ 1.0f, 1.0f, 1.0f, 0.02f }; // W is intensity
+        glm::vec3 m_lightPosition{ -1.0f };
+        alignas(16) glm::vec4 m_lightColor{ 1.0f }; // W is light intensity
     };
 
     Core::Core(std::shared_ptr<EngineWindow> _window)
         : m_window(_window) 
     {
+        m_globalPool = DescriptorPool::Builder(m_device)
+            .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+            .build();
+
         loadGameObjects();
     }
 
@@ -37,11 +44,25 @@ namespace Engine
                 );
             uboBuffers[i]->map();
         }
-        RenderSystem renderSystem(m_device, m_renderer.getSwapChainRenderPass());
+
+        auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+            .build();
+
+        RenderSystem renderSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
+        std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalDescriptorSets.size(); i++)
+        {
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            DescriptorWriter(*globalSetLayout, *m_globalPool)
+                .writeBuffer(0, &bufferInfo)
+                .build(globalDescriptorSets[i]);
+        }
 
         Camera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.0f));
         GameObject viewerObject = GameObject::createGameObject(); // Camera object used to store the state
+        viewerObject.m_transform.m_translation = glm::vec3(0.0f, 0.0f, -2.5f);
 
         InputHandler inputHandler{};
 
@@ -74,7 +95,9 @@ namespace Engine
                     frameIndex,
                     deltaTime,
                     commandBuffer,
-                    camera
+                    camera,
+                    globalDescriptorSets[frameIndex],
+                    m_gameObjects
                 };
 
                 // Update
@@ -85,7 +108,7 @@ namespace Engine
                 
                 // Render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                renderSystem.renderGameObjects(frameInfo, m_gameObjects);
+                renderSystem.renderGameObjects(frameInfo);
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
@@ -102,19 +125,24 @@ namespace Engine
     void Core::loadGameObjects()
     {
         std::shared_ptr<Model> model = Model::createModelFromFile(m_device, "Samples/Models/smooth_vase.obj");
-        GameObject obj1 = GameObject::createGameObject();
-        obj1.m_model = model;
-        obj1.m_transform.m_translation = glm::vec3(-0.2f, 0.2f, 0.75f);
-        obj1.m_transform.m_scale = glm::vec3(1.0f, 1.0f, 1.0f);
-
-        m_gameObjects.push_back(std::move(obj1));
+        GameObject vase1 = GameObject::createGameObject();
+        vase1.m_model = model;
+        vase1.m_transform.m_translation = glm::vec3(-0.5f, 0.5f, 0.0f);
+        vase1.m_transform.m_scale = glm::vec3(3.0f, 3.0f, 3.0f);
+        m_gameObjects.emplace(vase1.getId(), std::move(vase1));
 
         model = Model::createModelFromFile(m_device, "Samples/Models/flat_vase.obj");
-        GameObject obj2 = GameObject::createGameObject();
-        obj2.m_model = model;
-        obj2.m_transform.m_translation = glm::vec3(0.2f, 0.2f, 0.75f);
-        obj2.m_transform.m_scale = glm::vec3(1.0f, 1.0f, 1.0f);
+        GameObject vase2 = GameObject::createGameObject();
+        vase2.m_model = model;
+        vase2.m_transform.m_translation = glm::vec3(0.5f, 0.5f, 0.0f);
+        vase2.m_transform.m_scale = glm::vec3(3.0f, 3.0f, 3.0f);
+        m_gameObjects.emplace(vase2.getId(), std::move(vase2));
 
-        m_gameObjects.push_back(std::move(obj2));
+        model = Model::createModelFromFile(m_device, "Samples/Models/quad.obj");
+        GameObject floor = GameObject::createGameObject();
+        floor.m_model = model;
+        floor.m_transform.m_translation = glm::vec3(0.0f, 0.5f, 0.0f);
+        floor.m_transform.m_scale = glm::vec3(5.0f, 1.0f, 5.0f);
+        m_gameObjects.emplace(floor.getId(), std::move(floor));
     }
 }

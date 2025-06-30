@@ -138,6 +138,7 @@
     <ClCompile Include="Engine\Buffer.cpp" />
     <ClCompile Include="Engine\Camera.cpp" />
     <ClCompile Include="Engine\Core.cpp" />
+    <ClCompile Include="Engine\Descriptors.cpp" />
     <ClCompile Include="Engine\EngineDevice.cpp" />
     <ClCompile Include="Engine\FrameInfo.cpp" />
     <ClCompile Include="Engine\GameObject.cpp" />
@@ -154,6 +155,7 @@
     <ClInclude Include="Engine\Buffer.h" />
     <ClInclude Include="Engine\Camera.h" />
     <ClInclude Include="Engine\Core.h" />
+    <ClInclude Include="Engine\Descriptors.h" />
     <ClInclude Include="Engine\EngineDevice.h" />
     <ClInclude Include="Engine\FrameInfo.h" />
     <ClInclude Include="Engine\GameObject.h" />

@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "RenderSystem.h"
 #include "InputHandler.h"
+#include "Descriptors.h"
 
 #include <memory>
 #include <chrono>
@@ -29,8 +30,9 @@ namespace Engine
         std::shared_ptr<EngineWindow> m_window;
         EngineDevice m_device{ m_window };
         Renderer m_renderer{ m_window, m_device };
+        std::unique_ptr<DescriptorPool> m_globalPool{};
 
         void loadGameObjects();
-        std::vector<GameObject> m_gameObjects;
+        GameObject::Map m_gameObjects;
     };
 }

@@ -21,6 +21,7 @@ namespace Engine
     struct GameObject 
     {
         using id_t = unsigned int;
+        using Map = std::unordered_map<id_t, GameObject>;
 
         static GameObject createGameObject()
         {
