@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include "GameObject.h"
+#include "descriptors.h"
 
 #include <vulkan/vulkan.h>
 
@@ -32,6 +33,7 @@ namespace Engine
         VkCommandBuffer m_commandBuffer;
         Camera& m_camera;
         VkDescriptorSet m_globalDescriptorSet;
+        DescriptorPool& m_frameDescriptorPool;
         GameObject::Map& m_gameObjects;
     };
 }

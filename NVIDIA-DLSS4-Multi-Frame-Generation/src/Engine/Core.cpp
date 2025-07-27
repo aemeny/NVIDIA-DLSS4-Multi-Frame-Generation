@@ -1,6 +1,7 @@
 #include "Core.h"
 #include "Buffer.h"
 #include "..\Systems\PointLightSystem.h"
+#include "..\Systems\TextureRenderSystem.h"
 
 #include <glm/gtc/constants.hpp>
 
@@ -17,6 +18,19 @@ namespace Engine
             .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
             .build();
+
+        // build frame descriptor pools
+        framePools.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        auto framePoolBuilder = DescriptorPool::Builder(m_device)
+            .setMaxSets(1000)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+            .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+
+        for (int i = 0; i < framePools.size(); i++) 
+        {
+            framePools[i] = framePoolBuilder.build();
+        }
 
         loadGameObjects();
     }
@@ -53,7 +67,7 @@ namespace Engine
 
         RenderSystem renderSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
         PointLightSystem pointLightSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
-
+        TextureRenderSystem textureRenderSystem(m_device, m_renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout());
 
         Camera camera{};
         camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.0f));
@@ -81,18 +95,20 @@ namespace Engine
 
             // Update Camera aspect ratio and projection
             float aspectRatio = m_renderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.0f);
+            camera.setPerspectiveProjection(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f);
             
             // Render
             if (VkCommandBuffer commandBuffer = m_renderer.beginFrame())
             {
                 int frameIndex = m_renderer.getCurrentFrameIndex();
+                framePools[frameIndex]->resetPool();
                 FrameInfo frameInfo{
                     frameIndex,
                     deltaTime,
                     commandBuffer,
                     camera,
                     globalDescriptorSets[frameIndex],
+                    *framePools[frameIndex],
                     m_gameObjects
                 };
 
@@ -111,6 +127,7 @@ namespace Engine
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
                 // Rendering solid objects first
+                textureRenderSystem.renderGameObjects(frameInfo);
                 renderSystem.renderGameObjects(frameInfo);
                 pointLightSystem.render(frameInfo);
 
@@ -144,8 +161,10 @@ namespace Engine
         m_gameObjects.emplace(vase2.getId(), std::move(vase2));
 
         model = Model::createModelFromFile(m_device, "Samples/Models/quad.obj");
+        std::shared_ptr<Texture> Texture = Texture::createTextureFromFile(m_device, "Samples/Textures/Curuthers.png");
         GameObject floor = GameObject::createGameObject();
         floor.m_model = model;
+        floor.m_diffuseMap = Texture;
         floor.m_transform.m_translation = glm::vec3(0.0f, 0.5f, 0.0f);
         floor.m_transform.m_scale = glm::vec3(5.0f, 1.0f, 5.0f);
         m_gameObjects.emplace(floor.getId(), std::move(floor));

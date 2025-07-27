@@ -140,6 +140,8 @@
     <None Include="Shaders\Basic\Vertex.vert" />
     <None Include="Shaders\PointLight.frag" />
     <None Include="Shaders\PointLight.vert" />
+    <None Include="Shaders\TextureShader.frag" />
+    <None Include="Shaders\TextureShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Buffer.h" />
@@ -154,10 +156,12 @@
     <ClInclude Include="src\Engine\Pipeline.h" />
     <ClInclude Include="src\Engine\Renderer.h" />
     <ClInclude Include="src\Engine\SwapChain.h" />
+    <ClInclude Include="src\Engine\Texture.h" />
     <ClInclude Include="src\Engine\Utils.h" />
     <ClInclude Include="src\Engine\Window.h" />
     <ClInclude Include="src\Systems\PointLightSystem.h" />
     <ClInclude Include="src\Systems\RenderSystem.h" />
+    <ClInclude Include="src\Systems\TextureRenderSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Buffer.cpp" />
@@ -173,9 +177,11 @@
     <ClCompile Include="src\Engine\Pipeline.cpp" />
     <ClCompile Include="src\Engine\Renderer.cpp" />
     <ClCompile Include="src\Engine\SwapChain.cpp" />
+    <ClCompile Include="src\Engine\Texture.cpp" />
     <ClCompile Include="src\Engine\Window.cpp" />
     <ClCompile Include="src\Systems\PointLightSystem.cpp" />
     <ClCompile Include="src\Systems\RenderSystem.cpp" />
+    <ClCompile Include="src\Systems\TextureRenderSystem.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

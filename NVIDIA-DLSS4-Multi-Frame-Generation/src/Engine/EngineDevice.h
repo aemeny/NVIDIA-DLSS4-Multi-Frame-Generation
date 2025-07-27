@@ -60,6 +60,8 @@ namespace Engine
 
         void createImageWithInfo(const VkImageCreateInfo& _imageCreateInfo, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
     
+        void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1);
+
         VkPhysicalDeviceProperties properties;
 
     private:

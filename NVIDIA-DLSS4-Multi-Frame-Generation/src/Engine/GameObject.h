@@ -1,5 +1,6 @@
 #pragma once
 #include "ModelHandler.h"
+#include "texture.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -47,6 +48,7 @@ namespace Engine
 
         // Optional components
         std::shared_ptr<Model> m_model;
+        std::shared_ptr<Texture> m_diffuseMap = nullptr;
         std::unique_ptr<PointLightComponent> m_pointLight = nullptr;
 
     private:

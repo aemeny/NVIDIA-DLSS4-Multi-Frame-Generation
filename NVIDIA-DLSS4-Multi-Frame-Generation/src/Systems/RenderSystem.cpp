@@ -3,6 +3,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include <stdexcept>
+#include "TextureRenderSystem.h"
 
 namespace Engine
 {
@@ -71,7 +72,7 @@ namespace Engine
         for (auto& keyValue : _frameInfo.m_gameObjects)
         {
             GameObject& obj = keyValue.second;
-            if (obj.m_model == nullptr) continue;
+            if (obj.m_model == nullptr || obj.m_diffuseMap != nullptr) continue;
 
             SimplePushConstantData push = {};
             push.m_modelMatrix = obj.m_transform.mat4();

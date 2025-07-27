@@ -31,6 +31,7 @@ namespace Engine
         EngineDevice m_device{ m_window };
         Renderer m_renderer{ m_window, m_device };
         std::unique_ptr<DescriptorPool> m_globalPool{};
+        std::vector<std::unique_ptr<DescriptorPool>> framePools;
 
         void loadGameObjects();
         GameObject::Map m_gameObjects;

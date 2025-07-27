@@ -44,6 +44,12 @@
     <None Include="Shaders\PointLight.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\TextureShader.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\TextureShader.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Buffer.h">
@@ -94,6 +100,12 @@
     <ClInclude Include="src\Systems\PointLightSystem.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Texture.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\TextureRenderSystem.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Buffer.cpp">
@@ -142,6 +154,12 @@
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="src\Systems\PointLightSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Texture.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\TextureRenderSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
