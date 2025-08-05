@@ -45,6 +45,8 @@ namespace Engine
         VkSurfaceKHR surface() { return m_surface; }
         VkQueue graphicsQueue() { return m_graphicsQueue; }
         VkQueue presentQueue() { return m_presentQueue; }
+        VkPhysicalDevice physicalDevice() { return m_physicalDevice; }
+        VkInstance instance() { return m_instance; }
 
         SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(m_physicalDevice); }
         uint32_t findMemoryType(uint32_t _typeFilter, VkMemoryPropertyFlags _properties);
@@ -94,6 +96,6 @@ namespace Engine
         VkQueue m_presentQueue;
 
         const std::vector<const char*> m_validationLayers = { "VK_LAYER_KHRONOS_validation" };
-        const std::vector<const char*> m_deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+        const std::vector<const char*> m_deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME };
     };
 }

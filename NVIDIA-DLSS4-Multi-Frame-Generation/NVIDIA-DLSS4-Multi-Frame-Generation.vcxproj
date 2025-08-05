@@ -111,7 +111,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>contrib\windows-cl-amd64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;sl.interposer.lib;sl.common.lib;sl.dlss.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,7 +131,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>contrib\windows-cl-amd64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;sl.interposer.lib;sl.common.lib;sl.dlss.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -149,6 +149,7 @@
     <ClInclude Include="src\Engine\Core.h" />
     <ClInclude Include="src\Engine\Descriptors.h" />
     <ClInclude Include="src\Engine\EngineDevice.h" />
+    <ClInclude Include="src\Engine\FrameGenerationHandler.h" />
     <ClInclude Include="src\Engine\FrameInfo.h" />
     <ClInclude Include="src\Engine\GameObject.h" />
     <ClInclude Include="src\Engine\InputHandler.h" />
@@ -169,6 +170,7 @@
     <ClCompile Include="src\Engine\Core.cpp" />
     <ClCompile Include="src\Engine\Descriptors.cpp" />
     <ClCompile Include="src\Engine\EngineDevice.cpp" />
+    <ClCompile Include="src\Engine\FrameGenerationHandler.cpp" />
     <ClCompile Include="src\Engine\FrameInfo.cpp" />
     <ClCompile Include="src\Engine\GameObject.cpp" />
     <ClCompile Include="src\Engine\InputHandler.cpp" />

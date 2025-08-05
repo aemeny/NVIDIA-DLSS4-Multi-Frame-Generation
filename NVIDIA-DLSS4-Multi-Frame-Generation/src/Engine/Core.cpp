@@ -76,6 +76,7 @@ namespace Engine
 
         InputHandler inputHandler{};
 
+        m_frameGenerationHandler.initializeStreamline(m_device);
 
         auto currentTime = std::chrono::high_resolution_clock::now();
         m_terminateApplication = false;
@@ -136,6 +137,7 @@ namespace Engine
             }
         }
 
+        m_frameGenerationHandler.shutDownStreamline(); // Clean up Streamline resources before vulkan shutdown
         vkDeviceWaitIdle(m_device.device()); // Wait for the device to finish all operations before exiting
     }
 

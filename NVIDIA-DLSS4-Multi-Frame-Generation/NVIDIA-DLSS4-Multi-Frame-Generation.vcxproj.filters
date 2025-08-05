@@ -106,6 +106,9 @@
     <ClInclude Include="src\Systems\TextureRenderSystem.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\FrameGenerationHandler.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Buffer.cpp">
@@ -161,6 +164,9 @@
     </ClCompile>
     <ClCompile Include="src\Systems\TextureRenderSystem.cpp">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\FrameGenerationHandler.cpp">
+      <Filter>Source Files\Engine</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
