@@ -18,11 +18,14 @@ namespace Engine
         pref.numPathsToPlugins = 0; 
         pref.pathToLogsAndData = {}; // Path to logs in a file
         pref.allocateCallback = {}; // Resource allocation callback
-        pref.applicationId = 0; // Application ID when using NGX components
+
+        //pref.applicationId = 0; // Application ID when using NGX components
         pref.engine = sl::EngineType::eCustom;
         pref.engineVersion = "1.0.0"; // Engine version
+        pref.projectId = { "a0f57b54-1daf-4934-90ae-c4035c19df04" };
         pref.renderAPI = sl::RenderAPI::eVulkan; // Specify Vulkan as the render API
-        const sl::Feature features[] = { sl::kFeatureDLSS_G };
+
+        const sl::Feature features[] = { sl::kFeatureDLSS_G, sl::kFeatureReflex };
         pref.featuresToLoad = features;
         pref.numFeaturesToLoad = _countof(features);
         

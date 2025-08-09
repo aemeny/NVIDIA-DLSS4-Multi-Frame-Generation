@@ -131,7 +131,7 @@ namespace Engine
         std::cout << "physical device: " << properties.deviceName << std::endl;
     }
 
-    void EngineDevice::createLogicalDevice() 
+    void EngineDevice::createLogicalDevice()
     {
         QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice);
 
@@ -139,7 +139,7 @@ namespace Engine
         std::set<uint32_t> uniqueQueueFamilies = { indices.m_graphicsFamily, indices.m_presentFamily };
 
         float queuePriority = 1.0f;
-        for (uint32_t queueFamily : uniqueQueueFamilies) 
+        for (uint32_t queueFamily : uniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo queueCreateInfo = {};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -149,8 +149,30 @@ namespace Engine
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
-        VkPhysicalDeviceFeatures deviceFeatures = {};
+        VkPhysicalDeviceBufferDeviceAddressFeatures bufferAddress{
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES
+        };
+        bufferAddress.bufferDeviceAddress = VK_TRUE;
+
+        /*VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
+        deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;*/
+
+        VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures{
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
+        .timelineSemaphore = VK_TRUE     // enable timeline semaphores
+        };
+
+        VkPhysicalDeviceFeatures2 deviceFeatures2{
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+            .pNext = &timelineFeatures,
+            .features = {
+            .samplerAnisotropy = VK_TRUE,                  
+            .shaderStorageImageWriteWithoutFormat = VK_TRUE
+             }
+        };
+
+        timelineFeatures.pNext = &bufferAddress;
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -158,19 +180,18 @@ namespace Engine
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        createInfo.pEnabledFeatures = &deviceFeatures;
+        //createInfo.pEnabledFeatures = &deviceFeatures;
+
+        createInfo.pNext = &deviceFeatures2;
+        createInfo.pEnabledFeatures = nullptr;
+
         createInfo.enabledExtensionCount = static_cast<uint32_t>(m_deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = m_deviceExtensions.data();
 
-        // Might not really be necessary anymore because device specific validation layers have been deprecated
-        if (m_enableValidationLayers) 
+        if (m_enableValidationLayers)
         {
             createInfo.enabledLayerCount = static_cast<uint32_t>(m_validationLayers.size());
             createInfo.ppEnabledLayerNames = m_validationLayers.data();
-        }
-        else 
-        {
-            createInfo.enabledLayerCount = 0;
         }
 
         if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS)

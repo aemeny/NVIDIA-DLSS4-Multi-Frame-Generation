@@ -96,6 +96,10 @@ namespace Engine
         VkQueue m_presentQueue;
 
         const std::vector<const char*> m_validationLayers = { "VK_LAYER_KHRONOS_validation" };
-        const std::vector<const char*> m_deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME };
+        const std::vector<const char*> m_deviceExtensions = { 
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+            VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
+            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
+        };
     };
 }
