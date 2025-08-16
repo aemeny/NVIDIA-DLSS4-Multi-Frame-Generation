@@ -7,6 +7,8 @@
 
 namespace Engine
 {
+    struct FrameGenerationHandler;
+
     struct SwapChainSupportDetails 
     {
         VkSurfaceCapabilitiesKHR m_capabilities;
@@ -31,7 +33,7 @@ namespace Engine
         const bool m_enableValidationLayers = true;
 #endif
 
-        EngineDevice(std::weak_ptr<EngineWindow> _window);
+        EngineDevice(std::weak_ptr<EngineWindow> _window, FrameGenerationHandler& _frameGenHandler);
         ~EngineDevice();
 
         // Not copyable or movable
@@ -80,7 +82,7 @@ namespace Engine
         bool checkValidationLayerSupport();
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice _device);
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& _createInfo);
-        void hasGflwRequiredInstanceExtensions();
+        void hasGlfwRequiredInstanceExtensions();
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice _device);
 

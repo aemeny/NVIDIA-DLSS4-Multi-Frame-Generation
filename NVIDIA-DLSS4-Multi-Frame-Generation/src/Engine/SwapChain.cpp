@@ -51,7 +51,7 @@ namespace Engine
         {
             vkDestroyImageView(m_device.device(), m_depthImageViews[i], nullptr);
             vkDestroyImage(m_device.device(), m_depthImages[i], nullptr);
-            vkFreeMemory(m_device.device(), m_depthImageMemorys[i], nullptr);
+            vkFreeMemory(m_device.device(), m_depthImageMemories[i], nullptr);
         }
 
         for (auto framebuffer : m_swapChainFramebuffers)
@@ -105,13 +105,12 @@ namespace Engine
 
         VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[m_currentFrame] };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
-
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = _buffers;
-
         VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphores[*_imageIndex] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
@@ -129,7 +128,6 @@ namespace Engine
         VkSwapchainKHR swapChains[] = { m_swapChain };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
-
         presentInfo.pImageIndices = _imageIndex;
 
         auto result = vkQueuePresentKHR(m_device.presentQueue(), &presentInfo);
@@ -162,7 +160,7 @@ namespace Engine
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
         createInfo.imageExtent = extent;
         createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
         QueueFamilyIndices indices = m_device.findPhysicalQueueFamilies();
         uint32_t queueFamilyIndices[] = { indices.m_graphicsFamily, indices.m_presentFamily };
@@ -310,7 +308,7 @@ namespace Engine
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
         m_depthImages.resize(imageCount());
-        m_depthImageMemorys.resize(imageCount());
+        m_depthImageMemories.resize(imageCount());
         m_depthImageViews.resize(imageCount());
 
         for (int i = 0; i < m_depthImages.size(); i++) 
@@ -335,7 +333,7 @@ namespace Engine
                 imageInfo,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 m_depthImages[i],
-                m_depthImageMemorys[i]
+                m_depthImageMemories[i]
             );
 
             VkImageViewCreateInfo viewInfo{};
@@ -354,17 +352,17 @@ namespace Engine
         }
     }
 
-    void SwapChain::createSyncObjects() 
+    void SwapChain::createSyncObjects()
     {
         uint32_t imageCount = static_cast<uint32_t>(m_swapChainImages.size());
-
+        
         m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_renderFinishedSemaphores.resize(imageCount);
         m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
         m_imagesInFlight.resize(imageCount, VK_NULL_HANDLE);
 
         VkSemaphoreCreateInfo semaphoreInfo{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-        VkFenceCreateInfo     fenceInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        VkFenceCreateInfo fenceInfo{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -387,10 +385,20 @@ namespace Engine
 
     VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& _availableFormats) 
     {
-        for (const auto& availableFormat :_availableFormats) 
+        // Prefer UNORM for DLSS-G
+        for (const auto& format  : _availableFormats) 
         {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-                return availableFormat;
+            if (format.format == VK_FORMAT_B8G8R8A8_UNORM && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
+                return format;
+            }
+        }
+        for (const auto& format : _availableFormats)
+        {
+            if (format.format == VK_FORMAT_R8G8B8A8_UNORM && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
+                return format;
+            }
         }
 
         return _availableFormats[0];

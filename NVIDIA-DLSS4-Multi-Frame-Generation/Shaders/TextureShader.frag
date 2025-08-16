@@ -58,5 +58,9 @@ void main()
     }
 
     vec3 color = texture(diffuseMap, inFragUv).xyz;
-    outColour = vec4(diffuseLight * color + specularLight * inFragColor, 1.0);
+
+    vec3 lighting = diffuseLight * color + specularLight * inFragColor;
+    lighting = pow(lighting, vec3(1.0 / 2.2)); // Gamma correction for UNORM swapchain output
+
+    outColour = vec4(lighting, 1.0);
 }

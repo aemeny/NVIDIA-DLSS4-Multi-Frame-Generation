@@ -56,5 +56,8 @@ void main()
         specularLight += intensity * blinnTerm;
     }
 
-    outColour = vec4((diffuseLight * inFragColour) + (specularLight * inFragColour), 1.0);
+    vec3 lighting = (diffuseLight * inFragColour) + (specularLight * inFragColour);
+    lighting = pow(lighting, vec3(1.0 / 2.2)); // Gamma correction for UNORM swapchain output
+
+    outColour = vec4(lighting, 1.0);
 }

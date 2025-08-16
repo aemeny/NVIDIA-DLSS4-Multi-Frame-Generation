@@ -1,5 +1,7 @@
 #include "EngineDevice.h"
 
+#include "FrameGenerationHandler.h"
+
 #include <iostream>
 #include <cstring>
 #include <set>
@@ -42,13 +44,17 @@ namespace Engine
     }
 
     // Class member functions
-    EngineDevice::EngineDevice(std::weak_ptr<EngineWindow> _window) : m_window(_window)
+    EngineDevice::EngineDevice(std::weak_ptr<EngineWindow> _window, FrameGenerationHandler& _frameGenHandler) : m_window(_window)
     {
-        createInstance(); // Initializes Vulkan library and our conection to it
+        createInstance(); // Initializes Vulkan library and our connection to it
         setupDebugMessenger(); // Set up debug messenger for validation layers to check for errors on unreleased builds
         createSurface(); // Create a surface for rendering making use of GLFW
         pickPhysicalDevice(); // Pick a suitable physical device (GPU) for rendering with Vulkan
         createLogicalDevice(); // Create a logical device to interface with the physical device
+
+        /* ONLY USE FOR MANUAL HOOKING TO STREAMLINE */
+        _frameGenHandler.initializeStreamline(*this);
+
         createCommandPool(); // Create a command pool for managing command buffers
     }
     EngineDevice::~EngineDevice()
@@ -74,7 +80,7 @@ namespace Engine
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
+        appInfo.apiVersion = VK_API_VERSION_1_2;
 
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -100,7 +106,7 @@ namespace Engine
         if (vkCreateInstance(&createInfo, nullptr, &m_instance) != VK_SUCCESS)
             throw std::runtime_error("failed to create instance!");
 
-        hasGflwRequiredInstanceExtensions();
+        hasGlfwRequiredInstanceExtensions();
     }
 
     void EngineDevice::pickPhysicalDevice() 
@@ -167,7 +173,7 @@ namespace Engine
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
             .pNext = &timelineFeatures,
             .features = {
-            .samplerAnisotropy = VK_TRUE,                  
+            .samplerAnisotropy = VK_TRUE,
             .shaderStorageImageWriteWithoutFormat = VK_TRUE
              }
         };
@@ -298,7 +304,7 @@ namespace Engine
         return extensions;
     }
 
-    void EngineDevice::hasGflwRequiredInstanceExtensions() 
+    void EngineDevice::hasGlfwRequiredInstanceExtensions() 
     {
         uint32_t extensionCount = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);

@@ -30,7 +30,7 @@ namespace Engine
         // Member objs
         std::shared_ptr<EngineWindow> m_window;
         FrameGenerationHandler m_frameGenerationHandler{};
-        EngineDevice m_device{ m_window };
+        EngineDevice m_device{ m_window, m_frameGenerationHandler };
         Renderer m_renderer{ m_window, m_device };
         std::unique_ptr<DescriptorPool> m_globalPool{};
         std::vector<std::unique_ptr<DescriptorPool>> framePools;

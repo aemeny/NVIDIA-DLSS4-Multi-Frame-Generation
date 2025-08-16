@@ -29,6 +29,7 @@ namespace Engine
         pref.featuresToLoad = features;
         pref.numFeaturesToLoad = _countof(features);
         
+        
 
         if (SL_FAILED(res, slInit(pref)))
         {
@@ -67,20 +68,33 @@ namespace Engine
 
         QueueFamilyIndices indices = _device.findPhysicalQueueFamilies();
         vkInfo.graphicsQueueFamily = indices.m_graphicsFamily;
-        vkInfo.graphicsQueueIndex = 0; 
+        vkInfo.graphicsQueueIndex = 0;
         vkInfo.computeQueueFamily = indices.m_graphicsFamily; // Assuming compute and graphics share the same family
-        vkInfo.computeQueueIndex = 0; 
+        vkInfo.computeQueueIndex = 0;
         vkInfo.opticalFlowQueueFamily = indices.m_graphicsFamily; // Assuming optical flow shares the same family
         vkInfo.opticalFlowQueueIndex = 0;
-        vkInfo.useNativeOpticalFlowMode = false; 
+        vkInfo.useNativeOpticalFlowMode = false;
 
         vkInfo.computeQueueCreateFlags = 0;
         vkInfo.graphicsQueueCreateFlags = 0;
-        vkInfo.opticalFlowQueueCreateFlags = 0;      
+        vkInfo.opticalFlowQueueCreateFlags = 0;
 
         if (SL_FAILED(res, slSetVulkanInfo(vkInfo)))
         {
             throw std::runtime_error("Streamline Vulkan Info failed with error code: " + std::to_string(static_cast<int>(res)));
+        }
+
+        sl::AdapterInfo adapter{};
+        if (sl::Result::eOk != slIsFeatureSupported(sl::kFeatureDLSS_G, adapter))
+        {
+            throw std::runtime_error("DLSS_G is not supported on this device.");
+        }
+
+        sl::DLSSGOptions opts{};
+        opts.mode = sl::DLSSGMode::eAuto;
+        if (SL_FAILED(res, slDLSSGSetOptions(0, opts)))
+        {
+            throw std::runtime_error("DLSS set options failed: " + std::to_string(static_cast<int>(res)));
         }
     }
 }
