@@ -48,7 +48,7 @@ namespace Engine
                 1,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                );
+            );
             uboBuffers[i]->map();
         }
 
@@ -76,8 +76,11 @@ namespace Engine
 
         InputHandler inputHandler{};
 
-
+        // Delta time tracking
         auto currentTime = std::chrono::high_resolution_clock::now();
+        double fpsAccumTime = 0.0;
+        uint64_t accumFrames = 0;
+
         m_terminateApplication = false;
         while (!m_window->shouldClose() && !m_terminateApplication)
         {
@@ -96,7 +99,7 @@ namespace Engine
             // Update Camera aspect ratio and projection
             float aspectRatio = m_renderer.getAspectRatio();
             camera.setPerspectiveProjection(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f);
-            
+
             // Render
             if (VkCommandBuffer commandBuffer = m_renderer.beginFrame())
             {
@@ -122,7 +125,7 @@ namespace Engine
 
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
-                
+
                 // Render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
@@ -134,8 +137,38 @@ namespace Engine
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
-        }
 
+            fpsAccumTime += deltaTime;
+            accumFrames += 1;
+
+            FrameStats frameStats{};
+            bool DLLSSEnabled = m_frameGenerationHandler.getFrameStats(frameStats);
+
+            if (fpsAccumTime >= 0.5)
+            {
+                // Update title
+                char title[256];
+                if (DLLSSEnabled && frameStats.m_isFrameGenerationEnabled)
+                {
+                    uint64_t genframes = accumFrames - frameStats.m_totalPresentedFrameCount;
+                    double percentIncrease = ((frameStats.m_totalPresentedFrameCount / accumFrames) / accumFrames) * 100;
+
+                    std::snprintf(title, sizeof(title),
+                        "Vulkan Engine | Render: %d FPS | Output: %d FPS | FG: +%d FPS (%.0f%%)",
+                        accumFrames, frameStats.m_totalPresentedFrameCount, genframes, percentIncrease);
+                }
+                else
+                {
+                    std::snprintf(title, sizeof(title),
+                        "Vulkan Engine | Render: %d FPS (FG off)", accumFrames);
+                }
+
+                glfwSetWindowTitle(m_window->getGLFWWindow(), title);
+
+                fpsAccumTime = 0.0;
+                accumFrames = 0.0;
+            }
+        }
         vkDeviceWaitIdle(m_device.device()); // Wait for the device to finish all operations before exiting
         m_frameGenerationHandler.shutDownStreamline(); // Clean up Streamline resources before Vulkan shutdown
     }
