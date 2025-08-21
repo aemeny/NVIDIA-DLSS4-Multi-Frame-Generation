@@ -156,6 +156,7 @@
     <ClInclude Include="src\Engine\ModelHandler.h" />
     <ClInclude Include="src\Engine\Pipeline.h" />
     <ClInclude Include="src\Engine\Renderer.h" />
+    <ClInclude Include="src\Engine\SlVkProxies.h" />
     <ClInclude Include="src\Engine\SwapChain.h" />
     <ClInclude Include="src\Engine\Texture.h" />
     <ClInclude Include="src\Engine\Utils.h" />
@@ -178,6 +179,7 @@
     <ClCompile Include="src\Engine\ModelHandler.cpp" />
     <ClCompile Include="src\Engine\Pipeline.cpp" />
     <ClCompile Include="src\Engine\Renderer.cpp" />
+    <ClCompile Include="src\Engine\SlVkProxies.cpp" />
     <ClCompile Include="src\Engine\SwapChain.cpp" />
     <ClCompile Include="src\Engine\Texture.cpp" />
     <ClCompile Include="src\Engine\Window.cpp" />

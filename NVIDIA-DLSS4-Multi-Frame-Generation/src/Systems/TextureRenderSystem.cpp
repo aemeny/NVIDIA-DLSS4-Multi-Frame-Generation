@@ -15,6 +15,7 @@ namespace Engine
     {
         glm::mat4 m_modelMatrix{ 1.0f };
         glm::mat4 m_normalMatrix{ 1.0f };
+        glm::mat4 m_prevModelMatrix{ 1.0f }; // Previous frame model matrix for motion vectors
     };
 
 
@@ -66,6 +67,15 @@ namespace Engine
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.m_renderPass = renderPass;
         pipelineConfig.m_pipelineLayout = m_pipelineLayout;
+
+        VkPipelineColorBlendAttachmentState colourBlendAttachments[2] = {
+            pipelineConfig.m_colorBlendAttachment,
+            pipelineConfig.m_colorBlendAttachment
+        };
+        colourBlendAttachments[1].blendEnable = VK_FALSE;
+        pipelineConfig.m_colorBlendInfo.attachmentCount = 2;
+        pipelineConfig.m_colorBlendInfo.pAttachments = colourBlendAttachments;
+
         m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/TextureShader.vert.spv", "Shaders/TextureShader.frag.spv", pipelineConfig);
     }
 
@@ -108,6 +118,7 @@ namespace Engine
             TexturePushConstantData push{};
             push.m_modelMatrix = obj.m_transform.mat4();
             push.m_normalMatrix = obj.m_transform.normalMatrix();
+            push.m_prevModelMatrix = obj.m_transform.m_prevModelMatrix;
 
             vkCmdPushConstants(
                 _frameInfo.m_commandBuffer,

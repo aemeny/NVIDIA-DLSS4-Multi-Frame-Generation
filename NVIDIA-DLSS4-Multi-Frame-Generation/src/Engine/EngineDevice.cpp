@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstring>
 #include <set>
+#include <array>
 #include <unordered_set>
 
 namespace Engine
@@ -44,19 +45,21 @@ namespace Engine
     }
 
     // Class member functions
-    EngineDevice::EngineDevice(std::weak_ptr<EngineWindow> _window, FrameGenerationHandler& _frameGenHandler) : m_window(_window)
+    EngineDevice::EngineDevice(std::weak_ptr<EngineWindow> _window, FrameGenerationHandler& _frameGenHandler, SlVkProxies& _proxies) : 
+        m_window(_window), m_slProxies(_proxies)
     {
         createInstance(); // Initializes Vulkan library and our connection to it
         setupDebugMessenger(); // Set up debug messenger for validation layers to check for errors on unreleased builds
         createSurface(); // Create a surface for rendering making use of GLFW
         pickPhysicalDevice(); // Pick a suitable physical device (GPU) for rendering with Vulkan
-        createLogicalDevice(); // Create a logical device to interface with the physical device
 
-        /* ONLY USE FOR MANUAL HOOKING TO STREAMLINE */
-        _frameGenHandler.initializeStreamline(*this);
+        _frameGenHandler.generatePreferences(); // Generate Streamline preferences
+        m_slProxies.initializeModule(true); 
 
+        createLogicalDevice(_frameGenHandler); // Create a logical device to interface with the physical device
         createCommandPool(); // Create a command pool for managing command buffers
     }
+
     EngineDevice::~EngineDevice()
     {
         vkDestroyCommandPool(m_device, m_commandPool, nullptr);
@@ -71,6 +74,8 @@ namespace Engine
 
     void EngineDevice::createInstance()
     {
+        queryStreamlineRequirements();
+
         if (m_enableValidationLayers && !checkValidationLayerSupport())
             throw std::runtime_error("validation layers requested, but not available!");
 
@@ -80,12 +85,18 @@ namespace Engine
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_2;
+        appInfo.apiVersion = VK_API_VERSION_1_3;
 
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
         auto extensions = getRequiredExtensions();
+        {
+            std::unordered_set<std::string> have(extensions.begin(), extensions.end());
+            for (const char* ext : m_slInstanceExtensions)
+                if (ext && !have.count(ext)) { extensions.push_back(ext); have.insert(ext); }
+        }
+
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -137,21 +148,39 @@ namespace Engine
         std::cout << "physical device: " << properties.deviceName << std::endl;
     }
 
-    void EngineDevice::createLogicalDevice()
+    void EngineDevice::createLogicalDevice(FrameGenerationHandler& _frameGenHandler)
     {
+        // Re-query 
+        queryStreamlineRequirements();
+
         QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice);
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::set<uint32_t> uniqueQueueFamilies = { indices.m_graphicsFamily, indices.m_presentFamily };
 
         float queuePriority = 1.0f;
+        std::array<float, 2> queuePriorities = { 1.0f, 1.0f };
         for (uint32_t queueFamily : uniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo queueCreateInfo = {};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             queueCreateInfo.queueFamilyIndex = queueFamily;
-            queueCreateInfo.queueCount = 1;
-            queueCreateInfo.pQueuePriorities = &queuePriority;
+
+            const bool sharedGP = (indices.m_graphicsFamily == indices.m_presentFamily);
+            if (queueFamily == indices.m_graphicsFamily)
+            {
+                // Use 2 queues if present shares graphics family, otherwise 1.
+                m_hostGraphicsQueuesInFamily = sharedGP ? 2u : 1u;
+                queueCreateInfo.queueCount = m_hostGraphicsQueuesInFamily + m_slExtraGraphicsQueues + m_slExtraComputeQueues;
+            }
+            else
+            {
+                // Present-only only need 1 queue here.
+                queueCreateInfo.queueCount = 1;
+            }
+
+            queueCreateInfo.pQueuePriorities = queuePriorities.data();
+
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
@@ -177,8 +206,23 @@ namespace Engine
             .shaderStorageImageWriteWithoutFormat = VK_TRUE
              }
         };
+        deviceFeatures2.features.independentBlend = VK_TRUE;
 
+        VkPhysicalDeviceVulkan12Features sl12 = sl::getVkPhysicalDeviceVulkan12Features(0, nullptr);
+        VkPhysicalDeviceVulkan13Features sl13 = sl::getVkPhysicalDeviceVulkan13Features(0, nullptr);
+        sl::Result slRes = sl::Result::eOk;
+        sl::FeatureRequirements req{};
+        if (SL_SUCCEEDED(slRes, slGetFeatureRequirements(sl::kFeatureDLSS_G, req)))
+        {
+            sl12 = sl::getVkPhysicalDeviceVulkan12Features(req.vkNumFeatures12, req.vkFeatures12);
+            sl13 = sl::getVkPhysicalDeviceVulkan13Features(req.vkNumFeatures13, req.vkFeatures13);
+        }
+
+        sl13.pNext = nullptr;
+        sl12.pNext = &sl13;
+        bufferAddress.pNext = &sl12;
         timelineFeatures.pNext = &bufferAddress;
+        deviceFeatures2.pNext = &timelineFeatures;
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -186,13 +230,8 @@ namespace Engine
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        //createInfo.pEnabledFeatures = &deviceFeatures;
-
         createInfo.pNext = &deviceFeatures2;
         createInfo.pEnabledFeatures = nullptr;
-
-        createInfo.enabledExtensionCount = static_cast<uint32_t>(m_deviceExtensions.size());
-        createInfo.ppEnabledExtensionNames = m_deviceExtensions.data();
 
         if (m_enableValidationLayers)
         {
@@ -200,11 +239,30 @@ namespace Engine
             createInfo.ppEnabledLayerNames = m_validationLayers.data();
         }
 
+        // Merge SL device extensions
+        std::unordered_set<std::string> have(m_deviceExtensions.begin(), m_deviceExtensions.end());
+        for (const char* ext : m_slDeviceExtensions)
+        {
+            if (ext && !have.count(ext))
+            {
+                m_deviceExtensions.push_back(ext);
+                have.insert(ext);
+            }
+        }
+
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(m_deviceExtensions.size());
+        createInfo.ppEnabledExtensionNames = m_deviceExtensions.data();
+
         if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS)
             throw std::runtime_error("failed to create logical device!");
 
-        vkGetDeviceQueue(m_device, indices.m_graphicsFamily, 0, &m_graphicsQueue);
-        vkGetDeviceQueue(m_device, indices.m_presentFamily, 0, &m_presentQueue);
+        m_slProxies.resolve(m_instance, m_device);
+
+        m_slProxies.GetDeviceQueue(m_device, indices.m_graphicsFamily, 0, &m_graphicsQueue);
+        m_slProxies.GetDeviceQueue(m_device, indices.m_presentFamily, 0, &m_presentQueue);
+
+        /* ONLY USE FOR MANUAL HOOKING TO STREAMLINE */
+        _frameGenHandler.initializeStreamline(*this);
     }
 
     void EngineDevice::createCommandPool() 
@@ -650,5 +708,30 @@ namespace Engine
         vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
         endSingleTimeCommands(commandBuffer);
+    }
+
+    void EngineDevice::queryStreamlineRequirements()
+    {
+        sl::Result slRes = sl::Result::eOk;
+        sl::FeatureRequirements req{};
+        if (SL_FAILED(slRes, slGetFeatureRequirements(sl::kFeatureDLSS_G, req)))
+        {
+            m_slInstanceExtensions.clear();
+            m_slDeviceExtensions.clear();
+            m_slExtraGraphicsQueues = m_slExtraComputeQueues = m_slExtraOpticalFlowQueues = 0;
+            return;
+        }
+        
+        m_slInstanceExtensions.clear();
+        for (uint32_t i = 0; i < req.vkNumInstanceExtensions; ++i)
+            m_slInstanceExtensions.push_back(req.vkInstanceExtensions[i]);
+
+        m_slDeviceExtensions.clear();
+        for (uint32_t i = 0; i < req.vkNumDeviceExtensions; ++i)
+            m_slDeviceExtensions.push_back(req.vkDeviceExtensions[i]);
+
+        m_slExtraGraphicsQueues = req.vkNumGraphicsQueuesRequired;
+        m_slExtraComputeQueues = req.vkNumComputeQueuesRequired;
+        m_slExtraOpticalFlowQueues = req.vkNumOpticalFlowQueuesRequired;
     }
 }

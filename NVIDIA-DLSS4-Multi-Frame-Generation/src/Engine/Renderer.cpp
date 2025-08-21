@@ -1,13 +1,15 @@
 #include "Renderer.h"
 
+#include "FrameGenerationHandler.h"
+
 #include <stdexcept>
 #include <array>
 #include <iostream>
 
 namespace Engine
 {
-    Renderer::Renderer(std::weak_ptr<EngineWindow> _window, EngineDevice& _device)
-        : m_window(_window), m_device(_device)
+    Renderer::Renderer(std::weak_ptr<EngineWindow> _window, EngineDevice& _device, SlVkProxies& _slProxies)
+        : m_window(_window), m_device(_device), m_slProxies(_slProxies)
     {
         std::cout << "Max Push Constant Size: " << m_device.properties.limits.maxPushConstantsSize << std::endl;
         recreateSwapChain();
@@ -53,11 +55,35 @@ namespace Engine
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
             throw std::runtime_error("Failed to record command buffer!");
 
-        auto result = m_swapChain->submitCommandBuffers(&commandBuffer, &m_currentImageIndex);
+        if (m_frameGen)
+        {
+            m_frameGen->tagResources(
+                m_swapChain->getDepthImage(m_currentImageIndex),
+                m_swapChain->getDepthImageView(m_currentImageIndex),
+                m_swapChain->getDepthImageMemory(m_currentImageIndex),
+
+                m_swapChain->getMotionVectorImage(m_currentImageIndex),
+                m_swapChain->getMotionVectorImageView(m_currentImageIndex),
+                m_swapChain->getMotionVectorImageMemory(m_currentImageIndex),
+
+                m_swapChain->getSwapChainImage(m_currentImageIndex),
+                m_swapChain->getSwapChainImageView(m_currentImageIndex),
+                VK_NULL_HANDLE,
+
+                m_swapChain->getSwapChainExtent(),
+                commandBuffer
+            );
+
+            //m_frameGen->evaluateFeature(commandBuffer);
+        }
+
+        auto result = m_swapChain->submitCommandBuffers(&commandBuffer, &m_currentImageIndex, m_frameGen);
+
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.lock()->hasWindowResized())
         {
             m_window.lock()->resetWindowResizedFlag();
             recreateSwapChain();
+            if (m_frameGen) m_frameGen->triggerReset(2);
         }
         else if (result != VK_SUCCESS)
             throw std::runtime_error("Failed to submit command buffers!");
@@ -79,9 +105,10 @@ namespace Engine
         renderPassInfo.renderArea.offset = { 0, 0 };
         renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
 
-        std::array<VkClearValue, 2> clearValues = {};
-        clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f }; // Clear color
-        clearValues[1].depthStencil = { 1.0f, 0 }; // Clear depth
+        std::array<VkClearValue, 3> clearValues = {};
+        clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f }; // Clear color / Main colour
+        clearValues[1].color = { 0.0f, 0.0f, 0.0f, 0.0f }; // Clear motion vector
+        clearValues[2].depthStencil = { 1.0f, 0 }; // Clear depth
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
@@ -107,6 +134,20 @@ namespace Engine
         assert(_commandBuffer == getCurrentCommandBuffer() && "Cannot end render pass on command buffer from a different frame!");
 
         vkCmdEndRenderPass(_commandBuffer);
+    }
+
+    void Renderer::pushSLCommonConstants(const glm::mat4& _viewMatrix, const glm::mat4& _projectionMatrix, 
+        const glm::mat4& _prevViewMatrix, const glm::mat4& _prevProjectionMatrix, 
+        float _nearZ, float _farZ, bool _depthInverted, 
+        glm::vec2 _motionVecScale)
+    {
+        if (!m_frameGen) return;
+        m_frameGen->setCommonConstants(
+            _viewMatrix, _projectionMatrix, 
+            _prevViewMatrix, _prevProjectionMatrix, 
+            m_swapChain->getSwapChainExtent(), m_window.lock()->getExtent(), 
+            _nearZ, _farZ, _depthInverted, 
+            _motionVecScale);
     }
 
     void Renderer::createCommandBuffers()
@@ -144,12 +185,12 @@ namespace Engine
 
         if (m_swapChain == nullptr)
         {
-            m_swapChain = std::make_unique<SwapChain>(m_device, extend);
+            m_swapChain = std::make_unique<SwapChain>(m_device, extend, m_slProxies);
         }
         else
         {
             std::shared_ptr<SwapChain> oldSwapChain = std::move(m_swapChain);
-            m_swapChain = std::make_unique<SwapChain>(m_device, extend, oldSwapChain);
+            m_swapChain = std::make_unique<SwapChain>(m_device, extend, oldSwapChain, m_slProxies);
 
             if (!oldSwapChain->compareSwapFormats(*m_swapChain.get()))
                 throw std::runtime_error("Swap chain image or depth format has changed!");

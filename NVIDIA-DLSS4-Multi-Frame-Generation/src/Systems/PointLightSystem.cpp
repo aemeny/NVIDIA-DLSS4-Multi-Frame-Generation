@@ -56,6 +56,15 @@ namespace Engine
         pipelineConfig.m_bindingDescriptions.clear();
         pipelineConfig.m_renderPass = _renderPass;
         pipelineConfig.m_pipelineLayout = m_pipelineLayout;
+
+        VkPipelineColorBlendAttachmentState colourBlendAttachments[2] = {
+           pipelineConfig.m_colorBlendAttachment,
+           pipelineConfig.m_colorBlendAttachment
+        };
+        colourBlendAttachments[1].blendEnable = VK_FALSE;
+        pipelineConfig.m_colorBlendInfo.attachmentCount = 2;
+        pipelineConfig.m_colorBlendInfo.pAttachments = colourBlendAttachments;
+
         m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/PointLight.vert.spv", "Shaders/PointLight.frag.spv", pipelineConfig);
     }
 

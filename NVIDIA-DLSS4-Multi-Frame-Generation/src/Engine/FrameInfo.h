@@ -18,11 +18,14 @@ namespace Engine
 
     struct GlobalUbo
     {
-        /*64 bits; aligned*/ glm::mat4 m_projection{ 1.0f };
+        glm::mat4 m_projection{ 1.0f };
         glm::mat4 m_view{ 1.0f };
-        glm::mat4 inverseView{1.0f}; // Inverse for lighting calculations
+        glm::mat4 m_prevView;
+        glm::mat4 m_prevProjection;
+        glm::mat4 m_inverseView{1.0f}; // Inverse for lighting calculations
         glm::vec4 m_ambientLight{ 1.0f, 1.0f, 1.0f, 0.02f }; // W is intensity
         PointLight m_pointLights[MAX_LIGHTS]; // Array of point lights
+        glm::vec2 m_renderSize;
         int m_numLights = 0; // Number of active lights
     };
 

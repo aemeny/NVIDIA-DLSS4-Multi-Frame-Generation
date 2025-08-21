@@ -32,6 +32,8 @@ namespace Engine
             framePools[i] = framePoolBuilder.build();
         }
 
+        m_renderer.setFrameGen(&m_frameGenerationHandler);
+
         loadGameObjects();
     }
 
@@ -92,6 +94,14 @@ namespace Engine
             float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
+            // Update previous matrices
+            m_prevViewMatrix = camera.getViewMatrix();
+            m_prevProjectionMatrix = camera.getProjectionMatrix();
+            for (auto& [id, obj] : m_gameObjects) 
+            {
+                obj.m_transform.m_prevModelMatrix = obj.m_transform.mat4();
+            }
+
             // Gather Input and update camera
             inputHandler.moveInPlaneXZ(m_window->getGLFWWindow(), deltaTime, viewerObject);
             camera.setViewYXZ(viewerObject.m_transform.m_translation, viewerObject.m_transform.m_rotation);
@@ -119,12 +129,24 @@ namespace Engine
                 GlobalUbo ubo{};
                 ubo.m_projection = camera.getProjectionMatrix();
                 ubo.m_view = camera.getViewMatrix();
-                ubo.inverseView = camera.getInverseViewMatrix();
+                ubo.m_inverseView = camera.getInverseViewMatrix();
+                ubo.m_prevProjection = m_prevProjectionMatrix;
+                ubo.m_prevView = m_prevViewMatrix; 
+                ubo.m_renderSize = { m_renderer.getSwapChainExtent().width, m_renderer.getSwapChainExtent().height };
 
                 pointLightSystem.update(frameInfo, ubo);
 
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
+
+                // Set common constants for Streamline
+                m_renderer.pushSLCommonConstants(
+                    camera.getViewMatrix(), camera.getProjectionMatrix(),
+                    m_prevViewMatrix, m_prevProjectionMatrix,
+                    0.1f, 100.0f,
+                    false, // DepthInverted
+                    glm::vec2(1.0f / m_renderer.getSwapChainExtent().width, 1.0f / m_renderer.getSwapChainExtent().height)
+                );
 
                 // Render
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
@@ -141,23 +163,22 @@ namespace Engine
             fpsAccumTime += deltaTime;
             accumFrames += 1;
 
-            FrameStats frameStats{};
-            bool DLLSSEnabled = m_frameGenerationHandler.getFrameStats(frameStats);
-
-            if (fpsAccumTime >= 0.5)
+            if (fpsAccumTime >= 1.0)
             {
+                FrameStats frameStats{};
+                m_frameGenerationHandler.getFrameStats(frameStats);
+
                 // Update title
                 char title[256];
-                if (DLLSSEnabled && frameStats.m_isFrameGenerationEnabled)
-                {
-                    if (frameStats.m_totalPresentedFrameCount == 0) frameStats.m_totalPresentedFrameCount = accumFrames;
-                    
-                    uint64_t genframes = frameStats.m_totalPresentedFrameCount - accumFrames;
-                    double percentIncrease = (1 - (frameStats.m_totalPresentedFrameCount / accumFrames)) * 100;
+                if (frameStats.m_isFrameGenerationEnabled)
+                {                    
+                    uint64_t genframes = accumFrames * frameStats.m_totalPresentedFrameCount;
+                    uint64_t totalFrames = accumFrames + genframes;
+                    double percentIncrease = ((totalFrames - accumFrames) / accumFrames) * 100;
 
                     std::snprintf(title, sizeof(title),
                         "Vulkan Engine | Render: %d FPS | Output: %d FPS | FG: +%d FPS (+%.0f%%)",
-                        accumFrames, frameStats.m_totalPresentedFrameCount, genframes, percentIncrease);
+                        accumFrames, totalFrames, genframes, percentIncrease);
                 }
                 else
                 {

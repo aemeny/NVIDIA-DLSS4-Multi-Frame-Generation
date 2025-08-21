@@ -1,5 +1,7 @@
 #include "SwapChain.h"
 
+#include "FrameGenerationHandler.h"
+
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -7,17 +9,18 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include <thread>
 
 namespace Engine
 {
-    SwapChain::SwapChain(EngineDevice& _deviceRef, VkExtent2D _extent)
-        : m_device(_deviceRef), m_windowExtent(_extent) 
+    SwapChain::SwapChain(EngineDevice& _deviceRef, VkExtent2D _extent, SlVkProxies& _slProxies)
+        : m_device(_deviceRef), m_windowExtent(_extent), m_slProxies(_slProxies)
     {
         init();
     }
 
-    SwapChain::SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent, std::shared_ptr<SwapChain> _previous)
-        : m_device(_deviceRef), m_windowExtent(_windowExtent), m_oldSwapChain(_previous)
+    SwapChain::SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent, std::shared_ptr<SwapChain> _previous, SlVkProxies& _slProxies)
+        : m_device(_deviceRef), m_windowExtent(_windowExtent), m_oldSwapChain(_previous), m_slProxies(_slProxies)
     {
         init();
 
@@ -30,11 +33,14 @@ namespace Engine
         createImageViews();
         createRenderPass();
         createDepthResources();
+        createMotionVectorResources();
         createFramebuffers();
         createSyncObjects();
     }
 
-    SwapChain::~SwapChain() {
+    SwapChain::~SwapChain() 
+    {
+        // Destroy swap chain resources
         for (auto imageView : m_swapChainImageViews)
         {
             vkDestroyImageView(m_device.device(), imageView, nullptr);
@@ -43,10 +49,12 @@ namespace Engine
 
         if (m_swapChain != nullptr) 
         {
-            vkDestroySwapchainKHR(m_device.device(), m_swapChain, nullptr);
+            //vkDestroySwapchainKHR(m_device.device(), m_swapChain, nullptr);
+            m_slProxies.DestroySwapchainKHR(m_device.device(), m_swapChain, nullptr);
             m_swapChain = nullptr;
         }
 
+        // Destroy depth resources
         for (int i = 0; i < m_depthImages.size(); i++) 
         {
             vkDestroyImageView(m_device.device(), m_depthImageViews[i], nullptr);
@@ -54,11 +62,24 @@ namespace Engine
             vkFreeMemory(m_device.device(), m_depthImageMemories[i], nullptr);
         }
 
+        // Destroy MV resources
+        for (size_t i = 0; i < m_motionVectorImageViews.size(); ++i)
+        {
+            vkDestroyImageView(m_device.device(), m_motionVectorImageViews[i], nullptr);
+        }
+        for (size_t i = 0; i < m_motionVectorImages.size(); ++i)
+        {
+            vkDestroyImage(m_device.device(), m_motionVectorImages[i], nullptr);
+            vkFreeMemory(m_device.device(), m_motionVectorImageMemories[i], nullptr);
+        }
+
+        // Destroy frame buffers
         for (auto framebuffer : m_swapChainFramebuffers)
         {
             vkDestroyFramebuffer(m_device.device(), framebuffer, nullptr);
         }
-
+        
+        // Destroy renderPass
         vkDestroyRenderPass(m_device.device(), m_renderPass, nullptr);
 
         // cleanup synchronization objects
@@ -80,7 +101,16 @@ namespace Engine
             std::numeric_limits<uint64_t>::max()
         );
 
-        VkResult result = vkAcquireNextImageKHR(
+        //VkResult result = vkAcquireNextImageKHR(
+        //    m_device.device(),
+        //    m_swapChain,
+        //    std::numeric_limits<uint64_t>::max(),
+        //    m_imageAvailableSemaphores[m_currentFrame],  // must be a not signaled semaphore
+        //    VK_NULL_HANDLE,
+        //    _imageIndex
+        //);
+
+        VkResult result = m_slProxies.AcquireNextImageKHR(
             m_device.device(),
             m_swapChain,
             std::numeric_limits<uint64_t>::max(),
@@ -92,7 +122,7 @@ namespace Engine
         return result;
     }
 
-    VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex) 
+    VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex, FrameGenerationHandler* _frameGen)
     {
         if (m_imagesInFlight[*_imageIndex] != VK_NULL_HANDLE)
         {
@@ -116,8 +146,15 @@ namespace Engine
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         vkResetFences(m_device.device(), 1, &m_inFlightFences[m_currentFrame]);
+
+        if (_frameGen) 
+            _frameGen->reflexRenderSubmitStart(_frameGen->getFrameToken());
+
         if (vkQueueSubmit(m_device.graphicsQueue(), 1, &submitInfo, m_inFlightFences[m_currentFrame]) != VK_SUCCESS) 
             throw std::runtime_error("failed to submit draw command buffer!");
+
+        if (_frameGen)
+            _frameGen->reflexRenderSubmitEnd(_frameGen->getFrameToken());
 
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -130,7 +167,20 @@ namespace Engine
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = _imageIndex;
 
-        auto result = vkQueuePresentKHR(m_device.presentQueue(), &presentInfo);
+        if (_frameGen)
+        {
+            _frameGen->reflexPresentStart(_frameGen->getFrameToken());
+        }
+
+       // auto result = vkQueuePresentKHR(m_device.presentQueue(), &presentInfo);
+        auto result = m_slProxies.QueuePresentKHR(m_device.presentQueue(), &presentInfo);
+
+        if (_frameGen)
+        {
+            _frameGen->reflexPresentEnd(_frameGen->getFrameToken());
+            if (result == VK_SUCCESS) _frameGen->markPresented();
+            _frameGen->updateState();
+        }
 
         m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -186,15 +236,18 @@ namespace Engine
 
         createInfo.oldSwapchain = m_oldSwapChain == nullptr ? VK_NULL_HANDLE : m_oldSwapChain->m_swapChain;
 
-        if (vkCreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) 
+        //if (vkCreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) 
+        if (m_slProxies.CreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) != VK_SUCCESS)
             throw std::runtime_error("Failed to create swap chain!");
 
         /* Only specified a minimum number of images in the swap chain, so the implementation is allowed 
            to create a swap chain with more. First query the final number of images with vkGetSwapChainImagesKHR, 
            then resize the container and finally call it again to retrieve the handles. */
-        vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, nullptr);
+        //vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, nullptr);
+        m_slProxies.GetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, nullptr);
         m_swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, m_swapChainImages.data());
+        m_slProxies.GetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, m_swapChainImages.data());
+        //vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, m_swapChainImages.data());
 
         m_swapChainImageFormat = surfaceFormat.format;
         m_swapChainExtent = extent;
@@ -233,29 +286,44 @@ namespace Engine
         depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+        VkAttachmentDescription mvAttachment = {}; // Motion Vector
+        mvAttachment.format = VK_FORMAT_R16G16_SFLOAT;
+        mvAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        mvAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        mvAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        mvAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        mvAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        mvAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        mvAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
         VkAttachmentReference depthAttachmentRef{};
-        depthAttachmentRef.attachment = 1;
+        depthAttachmentRef.attachment = 2;
         depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-        VkAttachmentDescription colorAttachment = {};
-        colorAttachment.format = getSwapChainImageFormat();
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        VkAttachmentReference mvAttachmentRef{};
+        mvAttachmentRef.attachment = 1;
+        mvAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        VkAttachmentReference colorAttachmentRef = {};
-        colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        VkAttachmentDescription colourAttachment = {};
+        colourAttachment.format = getSwapChainImageFormat();
+        colourAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colourAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colourAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colourAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colourAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        VkAttachmentReference colourAttachmentRef = {};
+        colourAttachmentRef.attachment = 0;
+        colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkSubpassDescription subpass = {};
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colorAttachmentRef;
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
+        std::array<VkAttachmentReference, 2> colourRefs = { colourAttachmentRef, mvAttachmentRef };
+        subpass.colorAttachmentCount = static_cast<uint32_t>(colourRefs.size());
+        subpass.pColorAttachments = colourRefs.data();
 
         VkSubpassDependency dependency = {};
         dependency.dstSubpass = 0;
@@ -265,7 +333,7 @@ namespace Engine
         dependency.srcAccessMask = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 
-        std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+        std::array<VkAttachmentDescription, 3> attachments = { colourAttachment, mvAttachment, depthAttachment };
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -284,7 +352,7 @@ namespace Engine
         m_swapChainFramebuffers.resize(imageCount());
         for (size_t i = 0; i < imageCount(); i++) 
         {
-            std::array<VkImageView, 2> attachments = { m_swapChainImageViews[i], m_depthImageViews[i] };
+            std::array<VkImageView, 3> attachments = { m_swapChainImageViews[i], m_motionVectorImageViews[i], m_depthImageViews[i] };
 
             VkExtent2D swapChainExtent = getSwapChainExtent();
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -349,6 +417,51 @@ namespace Engine
 
             if (vkCreateImageView(m_device.device(), &viewInfo, nullptr, &m_depthImageViews[i]) != VK_SUCCESS) 
                 throw std::runtime_error("Failed to create texture image view!");
+        }
+    }
+
+    void SwapChain::createMotionVectorResources()
+    {
+        m_motionVectorImages.resize(imageCount());
+        m_motionVectorImageMemories.resize(imageCount());
+        m_motionVectorImageViews.resize(imageCount());
+
+        VkExtent2D extent = getSwapChainExtent();
+
+        for (size_t i = 0; i < imageCount(); i++)
+        {
+            VkImageCreateInfo imageInfo{};
+            imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            imageInfo.imageType = VK_IMAGE_TYPE_2D;
+            imageInfo.extent = { extent.width, extent.height, 1 };
+            imageInfo.mipLevels = 1;
+            imageInfo.arrayLayers = 1;
+            imageInfo.format = VK_FORMAT_R16G16_SFLOAT;
+            imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+            imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+            m_device.createImageWithInfo(
+                imageInfo,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                m_motionVectorImages[i],
+                m_motionVectorImageMemories[i]);
+
+            VkImageViewCreateInfo viewInfo{};
+            viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            viewInfo.image = m_motionVectorImages[i];
+            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            viewInfo.format = VK_FORMAT_R16G16_SFLOAT;
+            viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            viewInfo.subresourceRange.baseMipLevel = 0;
+            viewInfo.subresourceRange.levelCount = 1;
+            viewInfo.subresourceRange.baseArrayLayer = 0;
+            viewInfo.subresourceRange.layerCount = 1;
+
+            if (vkCreateImageView(m_device.device(), &viewInfo, nullptr, &m_motionVectorImageViews[i]) != VK_SUCCESS)
+                throw std::runtime_error("Failed to create MV image view!");
         }
     }
 

@@ -11,6 +11,7 @@ namespace Engine
         glm::vec3 m_translation{};
         glm::vec3 m_scale{1.0f};
         glm::vec3 m_rotation{0.0f}; // Rotation in radians
+        glm::mat4 m_prevModelMatrix{1.0f}; // Previous frame model matrix for motion vectors
 
         // Matrix corresponds to Translate * Ry * Rx * Rz * Scale
         // Rotations correspond to Tait-Bryan angles of Y(1), X(2), Z(3)

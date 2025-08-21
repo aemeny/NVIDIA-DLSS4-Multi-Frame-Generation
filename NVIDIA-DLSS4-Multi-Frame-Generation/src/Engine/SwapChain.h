@@ -10,8 +10,8 @@ namespace Engine
     {
         static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
-        SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent);
-        SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent, std::shared_ptr<SwapChain> _previous);
+        SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent, SlVkProxies& _slProxies);
+        SwapChain(EngineDevice& _deviceRef, VkExtent2D _windowExtent, std::shared_ptr<SwapChain> _previous, SlVkProxies& _slProxies);
         ~SwapChain();
 
         SwapChain(const SwapChain&) = delete;
@@ -30,18 +30,29 @@ namespace Engine
         VkFormat findDepthFormat();
 
         VkResult acquireNextImage(uint32_t* _imageIndex);
-        VkResult submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex);
+        VkResult submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex, FrameGenerationHandler* _frameGen);
 
         bool compareSwapFormats(const SwapChain& _swapChain) const {
             return _swapChain.m_swapChainDepthFormat == m_swapChainDepthFormat && 
                    _swapChain.m_swapChainImageFormat == m_swapChainImageFormat;
         }
 
+        // Getters for Streamline tagging
+        VkImageView getSwapChainImageView(uint32_t _index) const { return m_swapChainImageViews[_index]; }
+        VkImage getSwapChainImage(uint32_t _index) const { return m_swapChainImages[_index]; }
+        VkImageView getDepthImageView(uint32_t _index) const { return m_depthImageViews[_index]; }
+        VkDeviceMemory getDepthImageMemory(uint32_t _index) const { return m_depthImageMemories[_index]; }
+        VkImage getDepthImage(uint32_t _index) const { return m_depthImages[_index]; }
+        VkImageView getMotionVectorImageView(uint32_t _index) const { return m_motionVectorImageViews[_index]; }
+        VkDeviceMemory getMotionVectorImageMemory(uint32_t _index) const { return m_motionVectorImageMemories[_index]; }
+        VkImage getMotionVectorImage(uint32_t _index) const { return m_motionVectorImages[_index]; }
+
     private:
         void init();
         void createSwapChain();
         void createImageViews();
         void createDepthResources();
+        void createMotionVectorResources();
         void createRenderPass();
         void createFramebuffers();
         void createSyncObjects();
@@ -64,6 +75,12 @@ namespace Engine
         std::vector<VkImage> m_swapChainImages;
         std::vector<VkImageView> m_swapChainImageViews;
 
+        // Motion Vector Resources
+        std::vector<VkImage> m_motionVectorImages;
+        std::vector<VkDeviceMemory> m_motionVectorImageMemories;
+        std::vector<VkImageView> m_motionVectorImageViews;
+
+        SlVkProxies& m_slProxies;
         EngineDevice& m_device;
         VkExtent2D m_windowExtent;
 

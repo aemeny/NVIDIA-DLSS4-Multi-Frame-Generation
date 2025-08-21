@@ -28,14 +28,17 @@ namespace Engine
         bool m_terminateApplication;
 
         // Member objs
-        std::shared_ptr<EngineWindow> m_window;
         FrameGenerationHandler m_frameGenerationHandler{};
-        EngineDevice m_device{ m_window, m_frameGenerationHandler };
-        Renderer m_renderer{ m_window, m_device };
+        std::shared_ptr<EngineWindow> m_window;
+        SlVkProxies m_slProxies;
+        EngineDevice m_device{ m_window, m_frameGenerationHandler, m_slProxies};
+        Renderer m_renderer{ m_window, m_device, m_slProxies };
         std::unique_ptr<DescriptorPool> m_globalPool{};
         std::vector<std::unique_ptr<DescriptorPool>> framePools;
 
         void loadGameObjects();
         GameObject::Map m_gameObjects;
+        glm::mat4 m_prevViewMatrix{1.0f};
+        glm::mat4 m_prevProjectionMatrix{1.0f};
     };
 }

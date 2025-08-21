@@ -17,6 +17,7 @@ struct PointLight
     vec4 position; // Ignore W
     vec4 colour; // W is intensity
 };
+
 layout(set = 0, binding = 0) uniform globalUbo{
     mat4 projectionMatrix;
     mat4 viewMatrix;

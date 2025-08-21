@@ -4,28 +4,37 @@ layout (location = 0) in vec3 inFragColor;
 layout (location = 1) in vec3 inFragPosWorld;
 layout (location = 2) in vec3 inFragNormalWorld;
 layout (location = 3) in vec2 inFragUv;
+layout (location = 4) in vec4 inCurrClip;
+layout (location = 5) in vec4 inPrevClip;
 
 layout (location = 0) out vec4 outColour;
+layout (location = 1) out vec2 outMotion; //R16G16_SFLOAT target
 
 struct PointLight {
   vec4 position; // ignore w
   vec4 color; // w is intensity
 };
 
-layout(set = 0, binding = 0) uniform GlobalUbo {
+layout(set = 0, binding = 0) uniform GlobalUbo 
+{
   mat4 projection;
   mat4 view;
+  mat4 prevView;
+  mat4 prevProjection;
   mat4 invView;
   vec4 ambientLightColor; // w is intensity
   PointLight pointLights[10];
+  vec2 renderSize;
   int numLights;
 } ubo;
 
 layout (set = 1, binding = 0) uniform sampler2D diffuseMap;
 
-layout(push_constant) uniform Push {
+layout(push_constant) uniform PushConstants 
+{
   mat4 modelMatrix;
   mat4 normalMatrix;
+  mat4 prevModel;
 } push;
 
 void main() 
@@ -63,4 +72,11 @@ void main()
     lighting = pow(lighting, vec3(1.0 / 2.2)); // Gamma correction for UNORM swapchain output
 
     outColour = vec4(lighting, 1.0);
+
+    // Motion Vectors
+    vec2 cNDC = inCurrClip.xy / max(inCurrClip.w, 1e-6);
+    vec2 pNDC = inPrevClip.xy / max(inPrevClip.w, 1e-6);
+    vec2 ndcDelta = cNDC - pNDC;
+    vec2 motionPx = 0.5 * ndcDelta * max(ubo.renderSize, vec2(1.0));
+    outMotion = clamp(motionPx, vec2(-1e4), vec2(1e4));
 }

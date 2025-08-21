@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Window.h"
+#include "SlVkProxies.h"
 
 #include <vector>
 #include <memory>
@@ -33,7 +34,7 @@ namespace Engine
         const bool m_enableValidationLayers = true;
 #endif
 
-        EngineDevice(std::weak_ptr<EngineWindow> _window, FrameGenerationHandler& _frameGenHandler);
+        EngineDevice(std::weak_ptr<EngineWindow> _window, FrameGenerationHandler& _frameGenHandler, SlVkProxies& _proxies);
         ~EngineDevice();
 
         // Not copyable or movable
@@ -54,7 +55,7 @@ namespace Engine
         uint32_t findMemoryType(uint32_t _typeFilter, VkMemoryPropertyFlags _properties);
         QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(m_physicalDevice); }
         VkFormat findSupportedFormat(const std::vector<VkFormat>& _candidates, VkImageTiling _tiling, VkFormatFeatureFlags _features);
-        
+
         // Buffer Helper Functions
         void createBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _properties, VkBuffer& _buffer, VkDeviceMemory& _bufferMemory);
         void copyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
@@ -63,17 +64,28 @@ namespace Engine
         void endSingleTimeCommands(VkCommandBuffer _commandBuffer);
 
         void createImageWithInfo(const VkImageCreateInfo& _imageCreateInfo, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
-    
+
         void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1);
 
         VkPhysicalDeviceProperties properties;
+
+        uint32_t hostGraphicsQueuesInFamily() const { return m_hostGraphicsQueuesInFamily; }
+
+        // Streamline manual hooking requirements
+        void queryStreamlineRequirements();
+        std::vector<const char*> m_slInstanceExtensions;
+        std::vector<const char*> m_slDeviceExtensions;
+        uint32_t m_slExtraGraphicsQueues = 0;
+        uint32_t m_slExtraComputeQueues = 0;
+        uint32_t m_slExtraOpticalFlowQueues = 0;
+        uint32_t m_hostGraphicsQueuesInFamily = 1;
 
     private:
         void createInstance();
         void setupDebugMessenger();
         void createSurface();
         void pickPhysicalDevice();
-        void createLogicalDevice();
+        void createLogicalDevice(FrameGenerationHandler& _frameGenHandler);
         void createCommandPool();
 
         // Helper Functions
@@ -97,11 +109,17 @@ namespace Engine
         VkQueue m_graphicsQueue;
         VkQueue m_presentQueue;
 
+        SlVkProxies& m_slProxies;
+
         const std::vector<const char*> m_validationLayers = { "VK_LAYER_KHRONOS_validation" };
-        const std::vector<const char*> m_deviceExtensions = { 
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+        std::vector<const char*> m_deviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
             VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
-            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
+            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+            VK_NV_OPTICAL_FLOW_EXTENSION_NAME,
+            VK_KHR_PRESENT_ID_EXTENSION_NAME,
+            VK_KHR_PRESENT_WAIT_EXTENSION_NAME,
+            VK_NV_PRESENT_METERING_EXTENSION_NAME
         };
     };
 }
