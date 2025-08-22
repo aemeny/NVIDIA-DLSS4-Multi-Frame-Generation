@@ -12,7 +12,7 @@ namespace Engine
         PointLightSystem(const PointLightSystem&) = delete;
         PointLightSystem& operator=(const PointLightSystem&) = delete;
 
-        void update(FrameInfo& _frameInfo, GlobalUbo& _globalUbo);
+        void update(FrameInfo& _frameInfo, GlobalUbo& _globalUbo, bool _rotate);
         void render(FrameInfo& _frameInfo);
 
     private:

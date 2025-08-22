@@ -38,7 +38,8 @@ void main()
 {
     outFragOffset = OFFSETS[gl_VertexIndex];
 
+    const float scale = 0.2;
     vec4 lightInCameraSpace = ubo.viewMatrix * vec4(push.position.xyz, 1.0);
-    vec4 positionInCameraSpace = lightInCameraSpace + push.radius * vec4(outFragOffset, 0.0, 0.0);
+    vec4 positionInCameraSpace = lightInCameraSpace + scale * vec4(outFragOffset, 0.0, 0.0);
     gl_Position = ubo.projectionMatrix * positionInCameraSpace;
 }

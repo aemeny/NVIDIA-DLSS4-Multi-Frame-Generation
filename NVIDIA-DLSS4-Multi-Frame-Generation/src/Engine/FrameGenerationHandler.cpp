@@ -95,7 +95,7 @@ namespace Engine
         slSetFeatureLoaded(sl::kFeatureDLSS, false);
 
         sl::ReflexOptions ro{};
-        ro.mode = sl::ReflexMode::eLowLatency;
+        ro.mode = sl::ReflexMode::ReflexMode_eCount;
         sl::Result r = slReflexSetOptions(ro);
         if (r != sl::Result::eOk) 
            printf("[SL] slReflexSetOptions failed: %d\n", (int)r);

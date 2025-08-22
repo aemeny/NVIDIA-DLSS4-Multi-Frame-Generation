@@ -68,11 +68,12 @@ namespace Engine
         m_pipeline = std::make_unique<Pipeline>(m_device, "Shaders/PointLight.vert.spv", "Shaders/PointLight.frag.spv", pipelineConfig);
     }
 
-    void PointLightSystem::update(FrameInfo& _frameInfo, GlobalUbo& _globalUbo)
+    void PointLightSystem::update(FrameInfo& _frameInfo, GlobalUbo& _globalUbo, bool _rotate)
     {
+        float rotateAngle = _rotate ? _frameInfo.m_frameTime : 0;
         auto rotateLight = glm::rotate(
             glm::mat4(1.0f),
-            _frameInfo.m_frameTime,
+            rotateAngle,
             glm::vec3(0.0f, -1.0f, 0.0f));
 
         int lightIndex = 0;

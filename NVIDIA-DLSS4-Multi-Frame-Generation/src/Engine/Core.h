@@ -4,6 +4,7 @@
 #include "InputHandler.h"
 #include "Descriptors.h"
 #include "FrameGenerationHandler.h"
+#include "SceneTester.h"
 
 #include <memory>
 #include <chrono>
@@ -13,8 +14,8 @@ namespace Engine
     struct Core 
     {
         // Window dimensions
-        static constexpr int WIDTH = 1200;
-        static constexpr int HEIGHT = 900;
+        static constexpr int WIDTH = 1920;
+        static constexpr int HEIGHT = 1080;
 
         Core(std::shared_ptr<EngineWindow> _window);
         ~Core();
@@ -35,6 +36,9 @@ namespace Engine
         Renderer m_renderer{ m_window, m_device, m_slProxies };
         std::unique_ptr<DescriptorPool> m_globalPool{};
         std::vector<std::unique_ptr<DescriptorPool>> framePools;
+
+        SceneTester::CameraPanController m_panCameraController{};
+        SceneTester::SceneLoader m_loader{ m_device };
 
         void loadGameObjects();
         GameObject::Map m_gameObjects;

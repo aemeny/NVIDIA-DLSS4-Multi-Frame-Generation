@@ -106,7 +106,7 @@ namespace Engine
         renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
 
         std::array<VkClearValue, 3> clearValues = {};
-        clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f }; // Clear color / Main colour
+        clearValues[0].color = { 0.42f, 0.5f, 0.68f, 1.0f }; // Clear colour / Main colour
         clearValues[1].color = { 0.0f, 0.0f, 0.0f, 0.0f }; // Clear motion vector
         clearValues[2].depthStencil = { 1.0f, 0 }; // Clear depth
 

@@ -103,12 +103,24 @@ namespace Engine
             }
 
             // Gather Input and update camera
-            inputHandler.moveInPlaneXZ(m_window->getGLFWWindow(), deltaTime, viewerObject);
+            if (m_loader.m_sceneType == SceneTester::SceneType::CameraPan)
+            {
+                m_panCameraController.update(deltaTime, viewerObject);
+            }
+            else
+            {
+                inputHandler.moveInPlaneXZ(m_window->getGLFWWindow(), deltaTime, viewerObject);
+            }
             camera.setViewYXZ(viewerObject.m_transform.m_translation, viewerObject.m_transform.m_rotation);
 
             // Update Camera aspect ratio and projection
             float aspectRatio = m_renderer.getAspectRatio();
             camera.setPerspectiveProjection(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f);
+
+            if (m_loader.m_sceneType == SceneTester::SceneType::MovingScene) 
+            {
+                m_loader.updateMovingScene(deltaTime, m_gameObjects);
+            }
 
             // Render
             if (VkCommandBuffer commandBuffer = m_renderer.beginFrame())
@@ -134,7 +146,14 @@ namespace Engine
                 ubo.m_prevView = m_prevViewMatrix; 
                 ubo.m_renderSize = { m_renderer.getSwapChainExtent().width, m_renderer.getSwapChainExtent().height };
 
-                pointLightSystem.update(frameInfo, ubo);
+                if (m_loader.m_sceneType == SceneTester::SceneType::CameraPan)
+                {
+                    pointLightSystem.update(frameInfo, ubo, false);
+                }
+                else
+                {
+                    pointLightSystem.update(frameInfo, ubo, true);
+                }
 
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
@@ -204,49 +223,52 @@ namespace Engine
 
     void Core::loadGameObjects()
     {
-        std::shared_ptr<Model> model = Model::createModelFromFile(m_device, "Samples/Models/smooth_vase.obj");
-        GameObject vase1 = GameObject::createGameObject();
-        vase1.m_model = model;
-        vase1.m_transform.m_translation = glm::vec3(-0.5f, 0.5f, 0.0f);
-        vase1.m_transform.m_scale = glm::vec3(3.0f, 3.0f, 3.0f);
-        m_gameObjects.emplace(vase1.getId(), std::move(vase1));
+        SceneTester::SceneType type = SceneTester::SceneType::TrasnsparencyTest;
 
-        model = Model::createModelFromFile(m_device, "Samples/Models/flat_vase.obj");
-        GameObject vase2 = GameObject::createGameObject();
-        vase2.m_model = model;
-        vase2.m_transform.m_translation = glm::vec3(0.5f, 0.5f, 0.0f);
-        vase2.m_transform.m_scale = glm::vec3(3.0f, 3.0f, 3.0f);
-        m_gameObjects.emplace(vase2.getId(), std::move(vase2));
-
-        model = Model::createModelFromFile(m_device, "Samples/Models/quad.obj");
-        std::shared_ptr<Texture> Texture = Texture::createTextureFromFile(m_device, "Samples/Textures/Curuthers.png");
-        GameObject floor = GameObject::createGameObject();
-        floor.m_model = model;
-        floor.m_diffuseMap = Texture;
-        floor.m_transform.m_translation = glm::vec3(0.0f, 0.5f, 0.0f);
-        floor.m_transform.m_scale = glm::vec3(5.0f, 1.0f, 5.0f);
-        m_gameObjects.emplace(floor.getId(), std::move(floor));
-
-
-        // Create point lights
-        std::vector<glm::vec3> lightColors{
-            {1.f, .1f, .1f},
-            {.1f, .1f, 1.f},
-            {.1f, 1.f, .1f},
-            {1.f, 1.f, .1f},
-            {.1f, 1.f, 1.f},
-            {1.f, 1.f, 1.f}  // Predefined light colors
-        };
-        for (int i = 0; i < lightColors.size(); i++)
+        switch (type)
         {
-            auto pointLight = GameObject::makePointLight(0.2f);
-            pointLight.m_colour = lightColors[i];
-            auto rotateLight = glm::rotate(
-                glm::mat4(1.0f), 
-                (i * glm::two_pi<float>()) / lightColors.size(),
-                glm::vec3(0.0f, -1.0f, 0.0f));
-            pointLight.m_transform.m_translation = glm::vec3(rotateLight * glm::vec4(-1.2f, -1.2f, -1.2f, 1.0f));
-            m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        case SceneTester::SceneType::StaticGrid: // Static, GPU-heavy grid.
+            m_loader.m_sceneType = type;
+            m_loader.loadStaticGrid(m_gameObjects,
+                100, 100, // Grid dimensions, X, Z
+                0.25f, // Spacing
+                1.0f, // Uniform scale
+                0.0f, // Y position
+                true // Add lights
+            );
+            break;
+
+        case SceneTester::SceneType::CameraPan: // Camera orbiting, GPU-heavy grid.
+            m_loader.m_sceneType = type;
+            m_loader.loadStaticGrid(m_gameObjects,
+                100, 100, // Grid dimensions, X, Z
+                0.25f, // Spacing
+                1.0f, // Uniform scale
+                0.0f, // Y position
+                true // Add lights
+            );
+            break;
+
+        case SceneTester::SceneType::MovingScene: // Moving scene, GPU + CPU heavy.
+            m_loader.m_sceneType = type;
+            m_loader.loadMovingScene(
+                m_gameObjects,
+                100, 100, // Grid dimensions, X, Z
+                0.20f, // Spacing
+                1.0f, // Uniform scale
+                0.0f // Y position
+            );
+            break;
+
+        case SceneTester::SceneType::TrasnsparencyTest: // Transparency overdraw test.
+            m_loader.m_sceneType = type;
+            m_loader.loadTransparencyTest(
+                m_gameObjects,
+                4000, // Number of quads
+                0.0f, // Y position
+                3.0f // Scale
+            );
+            break;
         }
     }
 }
