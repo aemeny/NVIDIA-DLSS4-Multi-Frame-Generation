@@ -70,8 +70,8 @@ namespace Engine
 
         Pipeline::enableAlphaBlending(pipelineConfig);
 
-        pipelineConfig.m_depthStencilInfo.depthTestEnable = VK_FALSE;
-        pipelineConfig.m_depthStencilInfo.depthWriteEnable = VK_FALSE;
+        //pipelineConfig.m_depthStencilInfo.depthTestEnable = VK_FALSE;
+        //pipelineConfig.m_depthStencilInfo.depthWriteEnable = VK_FALSE;
 
         VkPipelineColorBlendAttachmentState colourBlendAttachments[2] = {
             pipelineConfig.m_colorBlendAttachment,
