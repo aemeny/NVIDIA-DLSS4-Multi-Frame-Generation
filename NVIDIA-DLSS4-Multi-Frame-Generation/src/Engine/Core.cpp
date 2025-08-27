@@ -264,7 +264,7 @@ namespace Engine
             m_loader.m_sceneType = type;
             m_loader.loadTransparencyTest(
                 m_gameObjects,
-                4000, // Number of quads
+                500, // Number of quads
                 0.0f, // Y position
                 3.0f // Scale
             );
