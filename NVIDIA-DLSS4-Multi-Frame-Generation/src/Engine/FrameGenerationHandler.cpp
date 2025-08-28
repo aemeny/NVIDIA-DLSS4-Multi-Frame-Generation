@@ -100,7 +100,7 @@ namespace Engine
         if (r != sl::Result::eOk) 
            printf("[SL] slReflexSetOptions failed: %d\n", (int)r);
 
-        m_DLSSGOptions.numFramesToGenerate = 2;
+        m_DLSSGOptions.numFramesToGenerate = 3;
         setDLSSGOptions(true);
     }
 
