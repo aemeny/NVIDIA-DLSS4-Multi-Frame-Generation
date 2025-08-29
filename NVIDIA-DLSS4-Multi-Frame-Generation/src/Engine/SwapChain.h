@@ -32,7 +32,8 @@ namespace Engine
         VkResult acquireNextImage(uint32_t* _imageIndex);
         VkResult submitCommandBuffers(const VkCommandBuffer* _buffers, uint32_t* _imageIndex, FrameGenerationHandler* _frameGen);
 
-        bool compareSwapFormats(const SwapChain& _swapChain) const {
+        bool compareSwapFormats(const SwapChain& _swapChain) const 
+        {
             return _swapChain.m_swapChainDepthFormat == m_swapChainDepthFormat && 
                    _swapChain.m_swapChainImageFormat == m_swapChainImageFormat;
         }

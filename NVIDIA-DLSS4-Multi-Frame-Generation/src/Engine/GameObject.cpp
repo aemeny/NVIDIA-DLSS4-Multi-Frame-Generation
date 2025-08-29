@@ -10,7 +10,8 @@ namespace Engine
         const float s2 = glm::sin(m_rotation.x);
         const float c1 = glm::cos(m_rotation.y);
         const float s1 = glm::sin(m_rotation.y);
-        return glm::mat4{
+        return glm::mat4
+        {
             {
                 m_scale.x * (c1 * c3 + s1 * s2 * s3),
                 m_scale.x * (c2 * s3),
@@ -42,7 +43,9 @@ namespace Engine
         const float c1 = glm::cos(m_rotation.y);
         const float s1 = glm::sin(m_rotation.y);
         const glm::vec3 inverseScale = 1.0f / m_scale;
-        return glm::mat3{
+
+        return glm::mat3
+        {
             {
                 inverseScale.x * (c1 * c3 + s1 * s2 * s3),
                 inverseScale.x * (c2 * s3),

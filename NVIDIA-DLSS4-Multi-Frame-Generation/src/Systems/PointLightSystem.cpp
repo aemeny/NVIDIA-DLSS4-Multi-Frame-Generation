@@ -74,7 +74,8 @@ namespace Engine
         auto rotateLight = glm::rotate(
             glm::mat4(1.0f),
             rotateAngle,
-            glm::vec3(0.0f, -1.0f, 0.0f));
+            glm::vec3(0.0f, -1.0f, 0.0f)
+        );
 
         int lightIndex = 0;
         for (auto& keyValue : _frameInfo.m_gameObjects)

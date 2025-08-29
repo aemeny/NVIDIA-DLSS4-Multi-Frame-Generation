@@ -5,7 +5,8 @@
 
 namespace Engine
 {
-    void Camera::setOrthographicProjection(float _left, float _right, float _bottom, float _top, float _near, float _far) {
+    void Camera::setOrthographicProjection(float _left, float _right, float _bottom, float _top, float _near, float _far) 
+    {
         m_projectionMatrix = glm::mat4{ 1.0f };
         m_projectionMatrix[0][0] = 2.f / (_right - _left);
         m_projectionMatrix[1][1] = 2.f / (_bottom - _top);
@@ -15,7 +16,8 @@ namespace Engine
         m_projectionMatrix[3][2] = -_near / (_far - _near);
     }
 
-    void Camera::setPerspectiveProjection(float _fovY, float _aspectRatio, float _near, float _far) {
+    void Camera::setPerspectiveProjection(float _fovY, float _aspectRatio, float _near, float _far) 
+    {
         assert(glm::abs(_aspectRatio - std::numeric_limits<float>::epsilon()) > 0.0f);
         const float tanHalfFovY = tan(_fovY / 2.f);
         m_projectionMatrix = glm::mat4{ 0.0f };

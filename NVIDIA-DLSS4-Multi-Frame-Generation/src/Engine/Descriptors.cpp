@@ -36,7 +36,8 @@ namespace Engine
         : m_device(_device), m_bindings(_bindings) 
     {
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
-        for (auto kv : _bindings) {
+        for (auto kv : _bindings) 
+        {
             setLayoutBindings.push_back(kv.second);
         }
 
@@ -105,7 +106,8 @@ namespace Engine
             throw std::runtime_error("failed to create descriptor pool!");
     }
 
-    DescriptorPool::~DescriptorPool() {
+    DescriptorPool::~DescriptorPool() 
+    {
         vkDestroyDescriptorPool(m_device.device(), m_descriptorPool, nullptr);
     }
 
@@ -119,13 +121,15 @@ namespace Engine
 
         // Might want to create a "DescriptorPoolManager" class that handles this case, and builds
         // a new pool whenever an old pool fills up.
-        if (vkAllocateDescriptorSets(m_device.device(), &allocInfo, &_descriptor) != VK_SUCCESS) {
+        if (vkAllocateDescriptorSets(m_device.device(), &allocInfo, &_descriptor) != VK_SUCCESS) 
+        {
             return false;
         }
         return true;
     }
 
-    void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& _descriptors) const {
+    void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& _descriptors) const 
+    {
         vkFreeDescriptorSets(
             m_device.device(),
             m_descriptorPool,
@@ -193,8 +197,10 @@ namespace Engine
         return true;
     }
 
-    void DescriptorWriter::overwrite(VkDescriptorSet& _set) {
-        for (auto& write : m_writes) {
+    void DescriptorWriter::overwrite(VkDescriptorSet& _set) 
+    {
+        for (auto& write : m_writes) 
+        {
             write.dstSet = _set;
         }
         vkUpdateDescriptorSets(m_pool.m_device.device(), m_writes.size(), m_writes.data(), 0, nullptr);

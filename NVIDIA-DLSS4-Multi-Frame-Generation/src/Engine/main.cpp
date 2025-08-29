@@ -1,7 +1,6 @@
 // Engine Core
 #include "Core.h" 
 
-// std
 #include <iostream>
 #include <cstdlib>
 

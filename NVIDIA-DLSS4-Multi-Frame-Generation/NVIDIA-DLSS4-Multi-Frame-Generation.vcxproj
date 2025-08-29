@@ -173,7 +173,6 @@
     <ClCompile Include="src\Engine\Descriptors.cpp" />
     <ClCompile Include="src\Engine\EngineDevice.cpp" />
     <ClCompile Include="src\Engine\FrameGenerationHandler.cpp" />
-    <ClCompile Include="src\Engine\FrameInfo.cpp" />
     <ClCompile Include="src\Engine\GameObject.cpp" />
     <ClCompile Include="src\Engine\InputHandler.cpp" />
     <ClCompile Include="src\Engine\main.cpp" />

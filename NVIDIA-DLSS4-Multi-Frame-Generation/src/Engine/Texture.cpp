@@ -54,7 +54,8 @@ namespace Engine
             imageInfo,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             m_textureImage,
-            m_textureImageMemory);
+            m_textureImageMemory
+        );
 
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -122,14 +123,12 @@ namespace Engine
     void Texture::createTextureImage(const std::string& _filepath) 
     {
         int texWidth, texHeight, texChannels;
-        // stbi_set_flip_vertically_on_load(1);  // todo determine why texture coordinates are flipped
         stbi_uc* pixels = stbi_load(_filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         if (!pixels) 
             throw std::runtime_error("failed to load texture image!");
 
-        // mMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
         m_mipLevels = 1;
 
         VkBuffer stagingBuffer;
@@ -169,20 +168,23 @@ namespace Engine
             imageInfo,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             m_textureImage,
-            m_textureImageMemory);
+            m_textureImageMemory
+        );
         m_device.transitionImageLayout(
             m_textureImage,
             VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_LAYOUT_UNDEFINED,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             m_mipLevels,
-            m_layerCount);
+            m_layerCount
+        );
         m_device.copyBufferToImage(
             stagingBuffer,
             m_textureImage,
             static_cast<uint32_t>(texWidth),
             static_cast<uint32_t>(texHeight),
-            m_layerCount);
+            m_layerCount
+        );
 
         // Comment this out while using mips
         m_device.transitionImageLayout(
@@ -193,8 +195,6 @@ namespace Engine
             m_mipLevels,
             m_layerCount);
 
-        // If we generate mip maps then the final image will already be READ_ONLY_OPTIMAL
-        // mDevice.generateMipmaps(mTextureImage, mFormat, texWidth, texHeight, mMipLevels);
         m_textureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         vkDestroyBuffer(m_device.device(), stagingBuffer, nullptr);
@@ -338,6 +338,7 @@ namespace Engine
             0,
             nullptr,
             1,
-            &barrier);
+            &barrier
+        );
     }
 }

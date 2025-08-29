@@ -15,7 +15,8 @@ namespace Engine
             VkFormat _format,
             VkExtent3D _extent,
             VkImageUsageFlags _usage,
-            VkSampleCountFlagBits _sampleCount);
+            VkSampleCountFlagBits _sampleCount
+        );
         ~Texture();
 
         Texture(const Texture&) = delete;

@@ -1,8 +1,8 @@
 #pragma once
 #include "EngineDevice.h"
 
-namespace Engine {
-
+namespace Engine 
+{
     struct Buffer
     {
         Buffer(

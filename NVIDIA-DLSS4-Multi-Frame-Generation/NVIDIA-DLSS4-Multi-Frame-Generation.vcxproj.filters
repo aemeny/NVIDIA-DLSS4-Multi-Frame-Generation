@@ -132,9 +132,6 @@
     <ClCompile Include="src\Engine\EngineDevice.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\FrameInfo.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\GameObject.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>

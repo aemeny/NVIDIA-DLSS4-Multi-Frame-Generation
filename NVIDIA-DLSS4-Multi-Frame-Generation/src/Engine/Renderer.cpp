@@ -73,8 +73,6 @@ namespace Engine
                 m_swapChain->getSwapChainExtent(),
                 commandBuffer
             );
-
-            //m_frameGen->evaluateFeature(commandBuffer);
         }
 
         auto result = m_swapChain->submitCommandBuffers(&commandBuffer, &m_currentImageIndex, m_frameGen);
@@ -147,7 +145,8 @@ namespace Engine
             _prevViewMatrix, _prevProjectionMatrix, 
             m_swapChain->getSwapChainExtent(), m_window.lock()->getExtent(), 
             _nearZ, _farZ, _depthInverted, 
-            _motionVecScale);
+            _motionVecScale
+        );
     }
 
     void Renderer::createCommandBuffers()
@@ -195,8 +194,5 @@ namespace Engine
             if (!oldSwapChain->compareSwapFormats(*m_swapChain.get()))
                 throw std::runtime_error("Swap chain image or depth format has changed!");
         }
-
-        // possible future improvement: If render pass is compatable do nothing else
-        // createPipeline(); TODO
     }
 }

@@ -7,23 +7,13 @@
 
 #include "Buffer.h"
 
-// std
 #include <cassert>
 #include <cstring>
 
 namespace Engine 
 {
-
-    /**
-     * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
-     *
-     * @param instanceSize The size of an instance
-     * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member (eg
-     * minUniformBufferOffsetAlignment)
-     *
-     * @return VkResult of the buffer mapping call
-     */
-    VkDeviceSize Buffer::getAlignment(VkDeviceSize _instanceSize, VkDeviceSize _minOffsetAlignment) {
+    VkDeviceSize Buffer::getAlignment(VkDeviceSize _instanceSize, VkDeviceSize _minOffsetAlignment) 
+    {
         if (_minOffsetAlignment > 0) 
             return (_instanceSize + _minOffsetAlignment - 1) & ~(_minOffsetAlignment - 1);
 
@@ -55,26 +45,12 @@ namespace Engine
         vkFreeMemory(m_device.device(), m_memory, nullptr);
     }
 
-    /**
-     * Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
-     *
-     * @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to map the complete
-     * buffer range.
-     * @param offset (Optional) Byte offset from beginning
-     *
-     * @return VkResult of the buffer mapping call
-     */
     VkResult Buffer::map(VkDeviceSize _size, VkDeviceSize _offset) 
     {
         assert(m_buffer && m_memory && "Called map on buffer before create");
         return vkMapMemory(m_device.device(), m_memory, _offset, _size, 0, &m_mapped);
     }
 
-    /**
-     * Unmap a mapped memory range
-     *
-     * @note Does not return a result as vkUnmapMemory can't fail
-     */
     void Buffer::unmap() 
     {
         if (m_mapped)
@@ -84,15 +60,6 @@ namespace Engine
         }
     }
 
-    /**
-     * Copies the specified data to the mapped buffer. Default value writes whole buffer range
-     *
-     * @param data Pointer to the data to copy
-     * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to flush the complete buffer
-     * range.
-     * @param offset (Optional) Byte offset from beginning of mapped region
-     *
-     */
     void Buffer::writeToBuffer(void* _data, VkDeviceSize _size, VkDeviceSize _offset) 
     {
         assert(m_mapped && "Cannot copy to unmapped buffer");
@@ -109,17 +76,6 @@ namespace Engine
         }
     }
 
-    /**
-     * Flush a memory range of the buffer to make it visible to the device
-     *
-     * @note Only required for non-coherent memory
-     *
-     * @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE to flush the
-     * complete buffer range.
-     * @param offset (Optional) Byte offset from beginning
-     *
-     * @return VkResult of the flush call
-     */
     VkResult Buffer::flush(VkDeviceSize _size, VkDeviceSize _offset) 
     {
         VkMappedMemoryRange mappedRange = {};
@@ -130,17 +86,6 @@ namespace Engine
         return vkFlushMappedMemoryRanges(m_device.device(), 1, &mappedRange);
     }
 
-    /**
-     * Invalidate a memory range of the buffer to make it visible to the host
-     *
-     * @note Only required for non-coherent memory
-     *
-     * @param size (Optional) Size of the memory range to invalidate. Pass VK_WHOLE_SIZE to invalidate
-     * the complete buffer range.
-     * @param offset (Optional) Byte offset from beginning
-     *
-     * @return VkResult of the invalidate call
-     */
     VkResult Buffer::invalidate(VkDeviceSize _size, VkDeviceSize _offset) 
     {
         VkMappedMemoryRange mappedRange = {};
@@ -151,58 +96,28 @@ namespace Engine
         return vkInvalidateMappedMemoryRanges(m_device.device(), 1, &mappedRange);
     }
 
-    /**
-     * Create a buffer info descriptor
-     *
-     * @param size (Optional) Size of the memory range of the descriptor
-     * @param offset (Optional) Byte offset from beginning
-     *
-     * @return VkDescriptorBufferInfo of specified offset and range
-     */
     VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize _size, VkDeviceSize _offset) 
     {
-        return VkDescriptorBufferInfo{
-            m_buffer,
-            _offset,
-            _size,
-        };
+        return VkDescriptorBufferInfo{m_buffer, _offset, _size};
     }
 
-    /**
-     * Copies "instanceSize" bytes of data to the mapped buffer at an offset of index * alignmentSize
-     *
-     * @param data Pointer to the data to copy
-     * @param index Used in offset calculation
-     *
-     */
-    void Buffer::writeToIndex(void* _data, int _index) { writeToBuffer(_data, m_instanceSize, _index * m_alignmentSize); }
+    void Buffer::writeToIndex(void* _data, int _index) 
+    { 
+        writeToBuffer(_data, m_instanceSize, _index * m_alignmentSize); 
+    }
 
-    /**
-     *  Flush the memory range at index * alignmentSize of the buffer to make it visible to the device
-     *
-     * @param index Used in offset calculation
-     *
-     */
-    VkResult Buffer::flushIndex(int _index) { return flush(m_alignmentSize, _index * m_alignmentSize); }
+    VkResult Buffer::flushIndex(int _index) 
+    { 
+        return flush(m_alignmentSize, _index * m_alignmentSize); 
+    }
 
-    /**
-     * Create a buffer info descriptor
-     *
-     * @param index Specifies the region given by index * alignmentSize
-     *
-     * @return VkDescriptorBufferInfo for instance at index
-     */
-    VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int _index) { return descriptorInfo(m_alignmentSize, _index * m_alignmentSize); }
+    VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int _index) 
+    { 
+        return descriptorInfo(m_alignmentSize, _index * m_alignmentSize); 
+    }
 
-    /**
-     * Invalidate a memory range of the buffer to make it visible to the host
-     *
-     * @note Only required for non-coherent memory
-     *
-     * @param index Specifies the region to invalidate: index * alignmentSize
-     *
-     * @return VkResult of the invalidate call
-     */
-    VkResult Buffer::invalidateIndex(int _index) { return invalidate(m_alignmentSize, _index * m_alignmentSize); }
-
+    VkResult Buffer::invalidateIndex(int _index) 
+    { 
+        return invalidate(m_alignmentSize, _index * m_alignmentSize); 
+    }
 }

@@ -86,8 +86,6 @@ namespace Engine
         m_movers.clear();
         m_time = 0.0f;
 
-        // Shared model + (optional) texture
-        //const std::string modelPath = "Samples/Models/coloured_cube.obj";
         const std::string modelPath = "Samples/Models/flat_vase.obj";
         std::shared_ptr<Model> model = Model::createModelFromFile(m_device, modelPath);
         std::shared_ptr<Texture> texture = Texture::createTextureFromFile(m_device, "Samples/Textures/Curuthers.png");
@@ -182,7 +180,7 @@ namespace Engine
     {
         _outObjects.clear();
 
-        // One shared quad + alpha-capable texture (use a sprite with real alpha if possible)
+        // One shared qua
         std::shared_ptr<Model> quad = Model::createModelFromFile(m_device, "Samples/Models/quad.obj");
         std::shared_ptr<Texture> texture = Texture::createTextureFromFile(m_device, "Samples/Textures/Curuthers.png");
 

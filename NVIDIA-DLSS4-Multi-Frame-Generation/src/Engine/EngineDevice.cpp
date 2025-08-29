@@ -189,10 +189,6 @@ namespace Engine
         };
         bufferAddress.bufferDeviceAddress = VK_TRUE;
 
-        /*VkPhysicalDeviceFeatures deviceFeatures = {};
-        deviceFeatures.samplerAnisotropy = VK_TRUE;
-        deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;*/
-
         VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
         .timelineSemaphore = VK_TRUE     // enable timeline semaphores

@@ -21,11 +21,13 @@ namespace Engine
         float getAspectRatio() const { return m_swapChain->extentAspectRatio(); }
         VkExtent2D getSwapChainExtent() const { return m_swapChain->getSwapChainExtent(); }
         bool isFrameInProgress() const { return m_isFrameStarted; }
-        VkCommandBuffer getCurrentCommandBuffer() const { 
+        VkCommandBuffer getCurrentCommandBuffer() const 
+        { 
             assert(m_isFrameStarted && "Cannot get command buffer when frame is not in progress!");
             return m_commandBuffers[m_currentFrameIndex];
         };
-        int getCurrentFrameIndex() const { 
+        int getCurrentFrameIndex() const 
+        { 
             assert(m_isFrameStarted && "Cannot get current frame index when frame is not in progress!");
             return m_currentFrameIndex; 
         }

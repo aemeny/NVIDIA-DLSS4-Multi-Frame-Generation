@@ -101,15 +101,6 @@ namespace Engine
             std::numeric_limits<uint64_t>::max()
         );
 
-        //VkResult result = vkAcquireNextImageKHR(
-        //    m_device.device(),
-        //    m_swapChain,
-        //    std::numeric_limits<uint64_t>::max(),
-        //    m_imageAvailableSemaphores[m_currentFrame],  // must be a not signaled semaphore
-        //    VK_NULL_HANDLE,
-        //    _imageIndex
-        //);
-
         VkResult result = m_slProxies.AcquireNextImageKHR(
             m_device.device(),
             m_swapChain,
@@ -172,7 +163,6 @@ namespace Engine
             _frameGen->reflexPresentStart(_frameGen->getFrameToken());
         }
 
-       // auto result = vkQueuePresentKHR(m_device.presentQueue(), &presentInfo);
         auto result = m_slProxies.QueuePresentKHR(m_device.presentQueue(), &presentInfo);
 
         if (_frameGen)
@@ -236,18 +226,15 @@ namespace Engine
 
         createInfo.oldSwapchain = m_oldSwapChain == nullptr ? VK_NULL_HANDLE : m_oldSwapChain->m_swapChain;
 
-        //if (vkCreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) 
         if (m_slProxies.CreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) != VK_SUCCESS)
             throw std::runtime_error("Failed to create swap chain!");
 
         /* Only specified a minimum number of images in the swap chain, so the implementation is allowed 
            to create a swap chain with more. First query the final number of images with vkGetSwapChainImagesKHR, 
            then resize the container and finally call it again to retrieve the handles. */
-        //vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, nullptr);
         m_slProxies.GetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, nullptr);
         m_swapChainImages.resize(imageCount);
         m_slProxies.GetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, m_swapChainImages.data());
-        //vkGetSwapchainImagesKHR(m_device.device(), m_swapChain, &imageCount, m_swapChainImages.data());
 
         m_swapChainImageFormat = surfaceFormat.format;
         m_swapChainExtent = extent;

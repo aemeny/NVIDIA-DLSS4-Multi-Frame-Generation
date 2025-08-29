@@ -223,7 +223,7 @@ namespace Engine
 
     void Core::loadGameObjects()
     {
-        SceneTester::SceneType type = SceneTester::SceneType::TrasnsparencyTest;
+        SceneTester::SceneType type = SceneTester::SceneType::CameraPan;
 
         switch (type)
         {

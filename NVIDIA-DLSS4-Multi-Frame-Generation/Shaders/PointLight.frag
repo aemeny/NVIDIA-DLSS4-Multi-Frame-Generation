@@ -10,6 +10,7 @@ struct PointLight
     vec4 position; // Ignore W
     vec4 colour; // W is intensity
 };
+
 layout(set = 0, binding = 0) uniform globalUbo{
     mat4 projectionMatrix;
     mat4 viewMatrix;
@@ -27,12 +28,14 @@ layout(push_constant) uniform PushConstants
 } push;
 
 const float M_PI = 3.14159265358;
+
 void main()
 {
     float dis = sqrt(dot(inFragOffset, inFragOffset));
     if (dis >= 1.0) {
         discard;
     }
+
     float cosDis = 0.5 * (cos(dis * M_PI) + 1.0);
     outFragColor = vec4(push.colour.xyz + cosDis, cosDis);
     outMotion = vec2(0.0, 0.0);

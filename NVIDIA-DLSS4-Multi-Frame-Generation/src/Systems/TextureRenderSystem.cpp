@@ -70,8 +70,9 @@ namespace Engine
 
         Pipeline::enableAlphaBlending(pipelineConfig);
 
+        // Enable for no depth buffer or test
         //pipelineConfig.m_depthStencilInfo.depthTestEnable = VK_FALSE;
-       // pipelineConfig.m_depthStencilInfo.depthWriteEnable = VK_FALSE;
+        //pipelineConfig.m_depthStencilInfo.depthWriteEnable = VK_FALSE;
 
         VkPipelineColorBlendAttachmentState colourBlendAttachments[2] = {
             pipelineConfig.m_colorBlendAttachment,
@@ -96,7 +97,8 @@ namespace Engine
             1,
             &_frameInfo.m_globalDescriptorSet,
             0,
-            nullptr);
+            nullptr
+        );
 
         for (auto& kv : _frameInfo.m_gameObjects) 
         {
@@ -118,7 +120,8 @@ namespace Engine
                 1,  // set count
                 &descriptorSet1,
                 0,
-                nullptr);
+                nullptr
+            );
 
             TexturePushConstantData push{};
             push.m_modelMatrix = obj.m_transform.mat4();
@@ -131,7 +134,8 @@ namespace Engine
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                 0,
                 sizeof(TexturePushConstantData),
-                &push);
+                &push
+            );
 
             obj.m_model->bind(_frameInfo.m_commandBuffer);
             obj.m_model->draw(_frameInfo.m_commandBuffer);

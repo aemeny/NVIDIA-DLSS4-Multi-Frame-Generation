@@ -43,7 +43,7 @@ namespace Engine
             VkExtent2D _renderSize, VkExtent2D _displaySize, 
             float _nearZ, float _farZ, bool _depthInverted,
             glm::vec2 _motionVecScale
-            );
+        );
         void tagResources(
             VkImage _depth, VkImageView _depthView, VkDeviceMemory _depthMem,
             VkImage _motionVec, VkImageView _motionVecView, VkDeviceMemory _motionVecMem,
@@ -61,6 +61,7 @@ namespace Engine
         sl::DLSSGOptions m_DLSSGOptions{};
         sl::DLSSGState m_lastState{};
         sl::FrameToken* m_frameToken = nullptr;
+
     private:
         sl::Preferences m_preferences{};
         sl::VulkanInfo m_vkInfo{};

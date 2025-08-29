@@ -5,7 +5,8 @@ namespace Engine
 {
     struct SceneTester
     {
-        enum class SceneType {
+        enum class SceneType 
+        {
             StaticGrid = 0,
             CameraPan = 1,
             MovingScene = 2,
@@ -23,29 +24,35 @@ namespace Engine
                 float _spacing,
                 float _uniformScale,
                 float _y,
-                bool _lights = true);
+                bool _lights = true
+            );
 
             void loadMovingScene(GameObject::Map& _outObjects,
                 int _gridX, int _gridZ,
                 float _spacing,
                 float _uniformScale,
                 float _y,
-                bool _lights = true);
+                bool _lights = true
+            );
 
             void updateMovingScene(float _dt, GameObject::Map& _outObjects);
 
             void loadTransparencyTest(GameObject::Map& _outObjects,
-                int _quads, float _y, float _s);
+                int _quads, float _y, float _s
+            );
 
             SceneType m_sceneType;
+
         private:
-            struct Mover {
+            struct Mover 
+            {
                 glm::vec3 base;      // base position
                 float ax, az, ay;    // amplitudes
                 float fx, fz, fy;    // angular frequencies
                 float phx, phz, phy; // phases
                 float rotSpeed;      // radians/sec around Y
             };
+
             std::unordered_map<GameObject::id_t, Mover> m_movers;
             float m_time = 0.0f;
 
@@ -54,7 +61,8 @@ namespace Engine
             void addDefaultLights(GameObject::Map& _outObjects,
                 int _count,
                 float _intensity,
-                float _radius);
+                float _radius
+            );
         };
 
         struct CameraPanController
