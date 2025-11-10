@@ -70,7 +70,7 @@ namespace Engine
             float m_radius = 8.5f;  // orbit radius
             float m_height = -2.5f;  // eye height
             float m_angularSpeed = 0.7f;
-            glm::vec3 m_target = { 0.f, -0.0f, 0.f };
+            glm::vec3 m_target = { 0.f, 1.0f, 0.f };
             float m_time = 0.f;
 
             void update(float _dt, GameObject& _viewer)

@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include "EngineDevice.h"
+
 #include <stdexcept>
 
 namespace Engine
@@ -43,5 +45,61 @@ namespace Engine
         m_window = glfwCreateWindow(m_width, m_height, m_windowName.c_str(), nullptr, nullptr);
         glfwSetWindowUserPointer(m_window, this);
         glfwSetFramebufferSizeCallback(m_window, frameBufferResizeCallback); // When resized call this function
+
+        glfwSetKeyCallback(m_window,
+            [](GLFWwindow* _window, int _key, int, int _action, int)
+            {
+                if (_action == GLFW_PRESS && _key == GLFW_KEY_F11)
+                {
+                    auto* self = static_cast<EngineWindow*>(glfwGetWindowUserPointer(_window));
+                    self->toggleFullscreen();
+                }
+            });
+    }
+
+    void EngineWindow::setFullscreen(bool _enable, bool _borderless, GLFWmonitor* _monitor, int _refreshRate)
+    {
+        if (m_isFullscreen == _enable) return;
+        if (!_monitor) _monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(_monitor);
+
+        if (_enable) 
+        {
+            glfwGetWindowPos(m_window, &m_windowCordX, &m_windowCordY);
+            glfwGetWindowSize(m_window, &m_width, &m_height);
+            m_borderless = _borderless;
+
+            if (_borderless) 
+            {
+                // Borderless full screen
+                glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_FALSE);
+                glfwSetWindowAttrib(m_window, GLFW_AUTO_ICONIFY, GLFW_FALSE);
+                glfwSetWindowMonitor(m_window, nullptr, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
+                
+                int mx, my; 
+                glfwGetMonitorPos(_monitor, &mx, &my);
+                glfwSetWindowPos(m_window, mx, my);
+
+            }
+            else 
+            {
+                // Exclusive full screen
+                glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_TRUE);
+                glfwSetWindowMonitor(m_window, _monitor, 0, 0, mode->width, mode->height,
+                    (_refreshRate == GLFW_DONT_CARE) ? mode->refreshRate : _refreshRate);
+
+            }
+            m_isFullscreen = true;
+
+        }
+        else 
+        {
+            // Restore windowed mode
+            glfwSetWindowMonitor(m_window, nullptr, m_windowCordX, m_windowCordY, m_width, m_height, GLFW_DONT_CARE);
+            glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_TRUE);
+            m_isFullscreen = false;
+
+        }
+        m_framebufferResized = true;
     }
 }

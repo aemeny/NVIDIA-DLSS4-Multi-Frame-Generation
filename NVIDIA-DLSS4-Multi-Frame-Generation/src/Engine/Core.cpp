@@ -189,22 +189,9 @@ namespace Engine
 
                 // Update title
                 char title[256];
-                if (frameStats.m_isFrameGenerationEnabled)
-                {                    
-                    uint64_t genframes = accumFrames * frameStats.m_totalPresentedFrameCount;
-                    uint64_t totalFrames = accumFrames + genframes;
-                    double percentIncrease = ((totalFrames - accumFrames) / accumFrames) * 100;
-
-                    std::snprintf(title, sizeof(title),
-                        "Vulkan Engine | Render: %d FPS | Output: %d FPS | FG: +%d FPS (+%.0f%%)",
-                        accumFrames, totalFrames, genframes, percentIncrease);
-                }
-                else
-                {
-                    std::snprintf(title, sizeof(title),
-                        "Vulkan Engine | Render: %d FPS (FG off)", 
-                        accumFrames);
-                }
+                std::snprintf(title, sizeof(title),
+                    "Vulkan Engine | Render: %d FPS (FG off)",
+                    accumFrames);
 
                 glfwSetWindowTitle(m_window->getGLFWWindow(), title);
 
